@@ -49,7 +49,7 @@ document.getElementById('changePasswordModal')
         console.log("ABRIENDO MODAL — ID:", accountId);
 
         if (accountId) {
-            form.action = `/public/accounts/${accountId}/change-password`;
+            form.action = `{{ url('/accounts') }}/${accountId}/change-password`;
         }
     });
 </script>

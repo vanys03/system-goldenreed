@@ -53,7 +53,7 @@
 function reimprimirTicket(rentaId) {
     let iframe = document.createElement('iframe');
     iframe.style.display = 'none';
-    iframe.src = `/public/tickets/rentas/${rentaId}/imprimible`;
+    iframe.src = `{{ url('/tickets/rentas') }}/${rentaId}/imprimible`;
     document.body.appendChild(iframe);
 
     iframe.onload = function () {

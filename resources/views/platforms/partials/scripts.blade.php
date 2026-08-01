@@ -57,7 +57,7 @@
                 const container = document.getElementById('iframeReimpresionContainer');
                 container.innerHTML = `
         <iframe 
-            src="/public/ticket/perfil/${profileId}" 
+            src="{{ url('/ticket/perfil') }}/${profileId}"
             style="width:0; height:0; border:0;" 
             onload="this.contentWindow.focus(); this.contentWindow.print();">
         </iframe>

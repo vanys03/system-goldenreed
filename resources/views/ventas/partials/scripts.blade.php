@@ -9,7 +9,7 @@
             placeholder: 'Buscar cliente...',
             width: '100%',
             ajax: {
-                url: '/public/ventas/buscar-clientes',
+                url: '{{ url('/ventas/buscar-clientes') }}',
                 dataType: 'json',
                 delay: 250,
                 data: params => ({ q: params.term }),
@@ -63,7 +63,7 @@ $('#tipo_cliente_badge').html(`
             obtenerRecargoReal(clienteId);
             calcularTotal();
 
-            fetch(`/public/ventas/estado-cliente/${clienteId}`)
+            fetch(`{{ url('/ventas/estado-cliente') }}/${clienteId}`)
                 .then(res => res.json())
                 .then(data => {
                     const estadoDiv = $('#estadoCliente');
@@ -102,7 +102,7 @@ $('#tipo_cliente_badge').html(`
         }
 
         function obtenerRecargoReal(clienteId) {
-            fetch(`/public/ventas/recargo/${clienteId}`)
+            fetch(`{{ url('/ventas/recargo') }}/${clienteId}`)
                 .then(res => res.json())
                 .then(data => {
                     $('#recargo_falta_pago').val(data.recargo.toFixed(2));

@@ -6,7 +6,7 @@
         btn.addEventListener('click', function () {
             ventaIdActual = this.dataset.id;
 
-            fetch(`/public/api/ventas/${ventaIdActual}`)
+            fetch(`{{ url('/api/ventas') }}/${ventaIdActual}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Error de red');
                     return response.json();
@@ -40,7 +40,7 @@
 
             // Crea uno nuevo
             const iframe = document.createElement('iframe');
-            iframe.src = `/public/ventas/${ventaIdActual}/ticket`;
+            iframe.src = `{{ url('/ventas') }}/${ventaIdActual}/ticket`;
             iframe.className = 'iframe-impresion-ticket';
             iframe.style.width = '0';
             iframe.style.height = '0';
@@ -73,7 +73,7 @@
 
             // Actualiza la acción del formulario para eliminar correctamente
             const form = document.getElementById('formEliminarVenta');
-            form.action = `/public/ventas/${ventaId}`; // o usa route() si lo armas con Blade
+            form.action = `{{ url('/ventas') }}/${ventaId}`;
 
             // Muestra la modal
             const modal = new bootstrap.Modal(document.getElementById('modalEliminarVenta'));

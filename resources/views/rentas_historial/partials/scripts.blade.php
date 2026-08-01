@@ -54,7 +54,7 @@ $(document).ready(function () {
         $('#btnReimprimirTicket').addClass('d-none');
 
         // Cargar detalle por AJAX
-        $('#contenido-ver-renta').load(`/public/rentas/${rentaId}/detalle`, function () {
+        $('#contenido-ver-renta').load(`{{ url('/rentas') }}/${rentaId}/detalle`, function () {
 
             // Mostrar botón imprimir y asignar acción
             $('#btnReimprimirTicket')
@@ -72,7 +72,7 @@ $(document).on('click', '.eliminar-renta', function () {
     const rentaId = $(this).data('id');
 
     $('#formEliminarRenta')
-        .attr('action', `/public/rentas/${rentaId}`);
+        .attr('action', `{{ url('/rentas') }}/${rentaId}`);
 
     $('#texto-eliminar-renta').text(
         '¿Estás seguro de que deseas eliminar esta renta?'

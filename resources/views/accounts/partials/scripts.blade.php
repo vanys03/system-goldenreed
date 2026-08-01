@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
             this.classList.add('active-email-elegant');
 
             const accountId = this.id.replace('account-', '');
-            fetch(`/public/accounts/${accountId}/profiles`)
+            fetch(`{{ url('/accounts') }}/${accountId}/profiles`)
                 .then(response => response.json())
                 .then(data => {
                     let html = `<h5 class="text-center panel-title-elegant">Perfiles de ${data.email}</h5>`;
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!button) return;
         const profileId = button.getAttribute('data-profile-id');
         document.getElementById('profileIdInput').value = profileId;
-        document.getElementById('assignProfileForm').action = `/public/profiles/${profileId}/assign`;
+        document.getElementById('assignProfileForm').action = `{{ url('/profiles') }}/${profileId}/assign`;
     });
 
     const unassignProfileModal = document.getElementById('unassignProfileModal');
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!button) return;
         const profileId = button.getAttribute('data-profile-id');
         document.getElementById('unassignProfileIdInput').value = profileId;
-        document.getElementById('unassignProfileForm').action = `/public/profiles/${profileId}/unassign`;
+        document.getElementById('unassignProfileForm').action = `{{ url('/profiles') }}/${profileId}/unassign`;
     });
 });
 const addPinModal = document.getElementById('addPinModal');
@@ -159,7 +159,7 @@ addPinModal.addEventListener('show.bs.modal', function (event) {
     document.querySelector('#addPinForm input[name="notes"]').value = currentPin ?? '';
 
     document.getElementById('addPinForm').action =
-        `/public/profiles/${profileId}/pin`;
+        `{{ url('/profiles') }}/${profileId}/pin`;
 });
 
 </script>
