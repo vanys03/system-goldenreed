@@ -212,11 +212,20 @@ Route::get('/api/ventas/{venta}', function (App\Models\Venta $venta) {
     return response()->json([
         'cliente' => $venta->cliente->nombre,
         'paquete' => optional($venta->cliente->paquete)->nombre ?? 'N/A',
+        'paquete_precio' => optional($venta->cliente->paquete)->precio ?? 0,
         'meses' => $venta->meses,
+        'subtotal' => $venta->subtotal,
         'descuento' => $venta->descuento,
         'recargo_domicilio' => $venta->recargo_domicilio,
         'recargo_atraso' => $venta->recargo_atraso ?? 0,
         'total' => $venta->total,
+        'estado' => $venta->estado,
+        'tipo_pago' => $venta->tipo_pago,
+        'fecha_venta' => optional($venta->fecha_venta)->format('d/m/Y'),
+        'hora_venta' => optional($venta->created_at)->format('h:i A'),
+        'periodo_inicio' => optional($venta->periodo_inicio)->format('d/m/Y'),
+        'periodo_fin' => optional($venta->periodo_fin)->format('d/m/Y'),
+        'registrado_por' => optional($venta->usuario)->name ?? 'N/A',
     ]);
 });
 Route::get('/ticket/imprimir/{venta}', [TicketController::class, 'imprimible'])->name('ticket.imprimible');

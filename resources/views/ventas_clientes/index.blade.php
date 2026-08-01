@@ -1,4 +1,4 @@
-@push('css')
+@push('styles')
 <link rel="stylesheet"
       href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 @endpush
@@ -121,59 +121,61 @@
                 <div class="container-fluid py-4">
                     <div class="card shadow-sm border-0">
 
-                        <div class="card-header bg-white border-0 pb-0">
-                            <h6 class="fw-bold mb-3">CLIENTES CON PAGO ADELANTADO</h6>
+                        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pb-0">
+                            <div>
+                                <h6 class="fw-bold mb-0">Clientes con pago adelantado</h6>
+                                <p class="text-xs text-secondary mb-0">Clientes activos al corriente con 2 o más meses pagados por adelantado</p>
+                            </div>
+                            <span class="badge bg-gradient-secondary">{{ $clientesPagoAdelantado->count() }}</span>
                         </div>
 
                         <div class="table-responsive px-3 pb-3">
-                            <table id="tablaPagosAdelantados" class="table align-items-center mb-0">
+                            <table id="tablaPagosAdelantados" class="table table-borderless align-items-center mb-0">
 
-                                <thead class="text-uppercase text-secondary text-xs">
+                                <thead>
                                     <tr>
-                                        <th>Nombre Cliente</th>
-                                        <th>Último Pago</th>
-                                        <th>Meses Pagados</th>
-                                        <th>Rango Cubierto</th>
-                                        <th>Próximo Vencimiento</th>
-                                        <th>Estado</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder">Cliente</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder">Teléfono</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Tipo</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Meses</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder">Periodo cubierto</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder">Vence</th>
+                                        <th class="text-uppercase text-secondary text-xs font-weight-bolder text-end">Monto pagado</th>
                                     </tr>
                                 </thead>
 
                                 <tbody class="text-sm">
 
                                     @forelse($clientesPagoAdelantado as $cliente)
-                                        <tr>
+                                        <tr class="border-bottom">
                                             <td class="fw-bold text-dark">
                                                 {{ $cliente->nombre }}
                                             </td>
 
-                                            <td>
-                                                {{ $cliente->ultimo_pago }}
+                                            <td class="text-secondary">
+                                                {{ $cliente->telefono }}
                                             </td>
 
-                                            <td>
-                                                <span class="badge bg-warning text-dark px-3 py-2">
-                                                    {{ $cliente->meses_pagados }}
-                                                    {{ $cliente->meses_pagados == 1 ? 'mes' : 'meses' }}
+                                            <td class="text-center">
+                                                <span class="badge bg-gradient-secondary">
+                                                    {{ $cliente->tipo }}
                                                 </span>
                                             </td>
 
-                                            <td>
-                                                <span class="badge bg-info text-dark px-3 py-2">
-                                                    {{ $cliente->rango_cubierto }}
-                                                </span>
+                                            <td class="text-center fw-bold text-dark">
+                                                {{ $cliente->meses_pagados }}
                                             </td>
 
-                                            <td>
-                                                <span class="badge rounded-pill bg-success px-3 py-2">
-                                                    {{ $cliente->dias_restantes }} días
-                                                </span>
+                                            <td class="text-secondary">
+                                                {{ $cliente->rango_cubierto }}
                                             </td>
 
-                                            <td>
-                                                <span class="badge bg-success px-3 py-2">
-                                                    {{ $cliente->estado }}
-                                                </span>
+                                            <td class="text-secondary" data-order="{{ $cliente->proximo_vencimiento->timestamp }}">
+                                                {{ $cliente->proximo_vencimiento->translatedFormat('d/m/Y') }}
+                                            </td>
+
+                                            <td class="text-end fw-bold text-success">
+                                                ${{ number_format($cliente->monto_pagado, 2) }}
                                             </td>
                                         </tr>
                                     @empty
@@ -197,7 +199,13 @@
                         <div class="card w-100 shadow-sm border-0">
 
                             <div class="card-header bg-white border-0 pb-0">
-                                <h6 class="mb-3 fw-bold">TABLA GENERAL DE ESTADO DE PAGOS</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">Estado de pagos</h6>
+                                        <p class="text-xs text-secondary mb-0">Vista general del estado de cobro de todos los clientes activos</p>
+                                    </div>
+                                    <span class="badge bg-gradient-secondary">{{ $clientes->count() }}</span>
+                                </div>
 
                                 <div class="row g-2 align-items-center mb-2">
 
@@ -251,21 +259,21 @@
                                         function filaHTML(c) {
                                             const wc = c.badge === 'warning' ? 'text-dark' : '';
                                             const historial = JSON.stringify(c.historial).replace(/'/g, '&#39;');
-                                            const activoBadge = c.activo
-                                                ? '<span class="badge bg-success">Activo</span>'
-                                                : '<span class="badge bg-secondary">Inactivo</span>';
-                                            return `<tr class="fila-cliente" style="cursor:pointer"
+                                            return `<tr class="fila-cliente border-bottom" style="cursor:pointer"
                                                         data-nombre="${c.nombre}"
                                                         data-total="${c.total_pagado}"
                                                         data-dias="${c.dias}"
                                                         data-dia-cobro="${c.dia_cobro}"
                                                         data-historial='${historial}'>
-                                                <td class="fw-bold">${c.nombre}</td>
-                                                <td>${c.dia_cobro}</td>
-                                                <td>${c.ultimo_pago}</td>
-                                                <td><span class="badge rounded-pill bg-${c.badge} ${wc} px-3">${c.texto_dias}</span></td>
-                                                <td><span class="badge bg-${c.badge} ${wc}">${c.estado}</span></td>
-                                                <td>${activoBadge}</td>
+                                                <td class="fw-bold text-dark">${c.nombre} <i class="material-icons opacity-4 ms-1" style="font-size:14px; vertical-align:middle;">chevron_right</i></td>
+                                                <td class="text-secondary">${c.telefono}</td>
+                                                <td class="text-secondary text-center">${c.dia_cobro}</td>
+                                                <td class="text-secondary">${c.ultimo_pago}</td>
+                                                <td class="text-secondary">${c.proximo_vencimiento_fmt}</td>
+                                                <td>
+                                                    <span class="badge bg-${c.badge} ${wc}">${c.estado}</span>
+                                                    <small class="d-block text-secondary mt-1">${c.texto_dias}</small>
+                                                </td>
                                             </tr>`;
                                         }
 
@@ -316,16 +324,16 @@
                             </div>
 
                             <div class="table-responsive px-3 pb-3">
-                                <table id="tablaEstadoPagos" class="table align-items-center mb-0">
+                                <table id="tablaEstadoPagos" class="table table-borderless align-items-center mb-0">
 
-                                    <thead class="text-uppercase text-secondary text-xs">
+                                    <thead>
                                         <tr>
-                                            <th>Nombre Cliente</th>
-                                            <th>Día de Cobro</th>
-                                            <th>Último Pago</th>
-                                            <th>Próximo Vencimiento</th>
-                                            <th>Estado</th>
-                                            <th>Cliente</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder">Cliente</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder">Teléfono</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder text-center">Día de cobro</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder">Último pago</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder">Próximo vencimiento</th>
+                                            <th class="text-uppercase text-secondary text-xs font-weight-bolder">Estado</th>
                                         </tr>
                                     </thead>
 
@@ -333,7 +341,7 @@
 
                                         @forelse($clientes as $cliente)
                                             <tr
-                                                class="fila-cliente"
+                                                class="fila-cliente border-bottom"
                                                 style="cursor:pointer"
                                                 data-nombre="{{ $cliente->nombre }}"
                                                 data-total="{{ $cliente->total_pagado }}"
@@ -341,35 +349,34 @@
                                                 data-dia-cobro="{{ $cliente->dia_cobro }}"
                                                 data-historial='@json($cliente->historial)'>
 
-                                                <td class="fw-bold">
+                                                <td class="fw-bold text-dark">
                                                     {{ $cliente->nombre }}
+                                                    <i class="material-icons opacity-4 ms-1" style="font-size:14px; vertical-align:middle;">chevron_right</i>
                                                 </td>
-                                                <td>
+
+                                                <td class="text-secondary">
+                                                    {{ $cliente->telefono }}
+                                                </td>
+
+                                                <td class="text-secondary text-center">
                                                     {{ $cliente->dia_cobro }}
                                                 </td>
 
-                                                <td>
+                                                <td class="text-secondary">
                                                     {{ $cliente->ultimo_pago }}
                                                 </td>
 
-                                                <td>
-                                                    <span class="badge rounded-pill bg-{{ $cliente->badge }} {{ $cliente->badge === 'warning' ? 'text-dark' : '' }} px-3">
-                                                        {{ $cliente->texto_dias }}
-                                                    </span>
+                                                <td class="text-secondary">
+                                                    {{ $cliente->proximo_vencimiento_fmt }}
                                                 </td>
 
                                                 <td>
                                                     <span class="badge bg-{{ $cliente->badge }} {{ $cliente->badge === 'warning' ? 'text-dark' : '' }}">
                                                         {{ $cliente->estado }}
                                                     </span>
-                                                </td>
-
-                                                <td>
-                                                    @if($cliente->activo)
-                                                        <span class="badge bg-success">Activo</span>
-                                                    @else
-                                                        <span class="badge bg-secondary">Inactivo</span>
-                                                    @endif
+                                                    <small class="d-block text-secondary mt-1">
+                                                        {{ $cliente->texto_dias }}
+                                                    </small>
                                                 </td>
                                             </tr>
                                         @empty
@@ -391,21 +398,22 @@
 
                     <div class="col-lg-4 mb-4">
                         <div class="card shadow-sm border-0 p-3 h-100">
-                            <h6 class="fw-bold mb-3">DETALLE DE PAGO:
-                                <span id="detalleNombre" class="text-uppercase text-primary">Selecciona un cliente</span>
-                            </h6>
-                            <div class="d-flex justify-content-between text-center mb-3">
+                            <p class="text-xs text-secondary text-uppercase mb-0">Detalle de pago</p>
+                            <h6 class="fw-bold mb-3" id="detalleNombre">Selecciona un cliente</h6>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <small class="text-muted d-block">Total Pagado</small>
+                                    <small class="text-muted d-block">Total pagado</small>
                                     <strong id="detalleTotal">$0.00</strong>
                                 </div>
-                                <div>
-                                    <small class="text-muted d-block">Estado Actual</small>
-                                    <strong id="detalleEstado" class="text-secondary">SIN SELECCIONAR</strong>
+                                <div class="text-end">
+                                    <small class="text-muted d-block">Estado actual</small>
+                                    <span id="detalleEstado" class="badge bg-secondary">SIN SELECCIONAR</span>
                                 </div>
                             </div>
                             <hr>
-                            <h6 class="text-sm fw-bold mb-3">HISTORIAL DE PAGOS</h6>
+                            <h6 class="text-sm fw-bold mb-1">Historial de pagos</h6>
+                            <p class="text-xs text-secondary mb-3">Del más reciente al más antiguo</p>
                             <div id="detalleHistorial">
                                 <div class="text-center text-muted py-4">
                                     <i class="material-icons opacity-6 mb-2" style="font-size:40px;">payments</i>
@@ -419,6 +427,8 @@
                 
 
                 
+                @include('ventas_clientes.partials.styles')
+                @include('ventas_clientes.partials.modal-detalle-pago')
                 @include('ventas_clientes.partials.scripts')
             </div>
     </main>

@@ -588,16 +588,18 @@ class VentasController extends Controller
             'C' => (int) ($clientesPorTipo['C'] ?? 0),
         ]);
         $estadoPagosData = $this->estadoPagosCliente($request);
-        $clientesPagoAdelantado = Cliente::with([
-            'ventas' => function ($q) {
-                $q->orderByDesc('fecha_venta');
-            }
-        ])
+        $clientesPagoAdelantado = Cliente::where('activo', 1)
+            ->with([
+                'ventas' => function ($q) use ($estadosPagados) {
+                    $q->whereIn('estado', $estadosPagados)
+                        ->orderByDesc('periodo_fin');
+                }
+            ])
             ->get()
             ->map(function ($cliente) use ($hoy) {
                 $ultimaVenta = $cliente->ventas->first();
 
-                // Solo considerar clientes con una venta registrada
+                // Solo considerar clientes con una venta pagada registrada
                 if (!$ultimaVenta || !$ultimaVenta->periodo_fin) {
                     return null;
                 }
@@ -612,6 +614,11 @@ class VentasController extends Controller
                 $proximoVencimiento = Carbon::parse($ultimaVenta->periodo_fin);
                 $diasRestantes = $hoy->diffInDays($proximoVencimiento, false);
 
+                // Si el periodo ya venció, no está "adelantado"
+                if ($diasRestantes < 0) {
+                    return null;
+                }
+
                 $rangoCubierto = '';
                 if ($ultimaVenta->periodo_inicio && $ultimaVenta->periodo_fin) {
                     $rangoCubierto =
@@ -622,12 +629,13 @@ class VentasController extends Controller
 
                 return (object) [
                     'nombre' => $cliente->nombre,
-                    'telefono' => $cliente->telefono ?? '-',
-                    'ultimo_pago' => optional($ultimaVenta->fecha_venta)->format('d/m/Y') ?? '-',
+                    'telefono' => $cliente->telefono1 ?? '-',
+                    'tipo' => $cliente->tipo ?? '-',
                     'meses_pagados' => $mesesPagados,
                     'rango_cubierto' => $rangoCubierto,
+                    'proximo_vencimiento' => $proximoVencimiento,
+                    'monto_pagado' => $ultimaVenta->total,
                     'dias_restantes' => $diasRestantes,
-                    'estado' => 'AL CORRIENTE',
                 ];
             })
             ->filter()
@@ -659,11 +667,12 @@ class VentasController extends Controller
     {
         $hoy = Carbon::today();
 
-        $query = Cliente::with([
-            'ventas' => function ($q) {
-                $q->orderByDesc('fecha_venta');
-            }
-        ]);
+        $query = Cliente::where('activo', 1)
+            ->with([
+                'ventas' => function ($q) {
+                    $q->orderByDesc('fecha_venta');
+                }
+            ]);
 
         if ($request->filled('buscar')) {
             $query->where('nombre', 'like', '%' . $request->buscar . '%');
@@ -681,9 +690,13 @@ class VentasController extends Controller
             $proximoVencimiento = $ultimaVenta?->periodo_fin;
             $dias = $proximoVencimiento
                 ? $hoy->diffInDays(Carbon::parse($proximoVencimiento), false)
-                : 999;
+                : null;
 
-            if ($dias < 0) {
+            if (is_null($dias)) {
+                $estado = 'SIN PAGOS';
+                $badge = 'dark';
+                $textoDias = 'Sin pagos registrados';
+            } elseif ($dias < 0) {
                 $estado = 'VENCIDO';
                 $badge = 'danger';
                 $textoDias = abs($dias) . ' días vencido';
@@ -700,7 +713,7 @@ class VentasController extends Controller
             $historial = $cliente->ventas->take(10)->map(function ($venta) {
                 return [
                     'venta_id' => $venta->id,
-                    'fecha'    => optional($venta->fecha_venta)->format('d/m/Y'),
+                    'fecha'    => optional($venta->fecha_venta)->locale('es')->translatedFormat('j F Y'),
                     'total'    => $venta->total,
                     'estado'   => $venta->estado,
                 ];
@@ -713,13 +726,14 @@ class VentasController extends Controller
             return (object) [
                 'id' => $cliente->id,
                 'nombre' => $cliente->nombre,
-                'telefono' => $cliente->telefono ?? '',
+                'telefono' => $cliente->telefono1 ?? '-',
                 'activo' => (bool) $cliente->activo,
                 'dia_cobro' => $proximoVencimiento
                     ? Carbon::parse($proximoVencimiento)->day
                     : '-',
                 'ultimo_pago' => optional($ultimaVenta?->fecha_venta)?->format('d/m/Y') ?? '-',
                 'proximo_vencimiento' => $proximoVencimiento,
+                'proximo_vencimiento_fmt' => $proximoVencimiento ? Carbon::parse($proximoVencimiento)->format('d/m/Y') : '-',
                 'dias' => $dias,
                 'estado' => $estado,
                 'badge' => $badge,
@@ -733,6 +747,10 @@ class VentasController extends Controller
             $filtro = $request->dias_restantes;
 
             $clientes = $clientes->filter(function ($cliente) use ($filtro) {
+                if (is_null($cliente->dias)) {
+                    return $filtro === 'vencidos';
+                }
+
                 return match ($filtro) {
                     'menos_7' => $cliente->dias >= 0 && $cliente->dias <= 7,
                     'vencidos' => $cliente->dias < 0,
@@ -747,26 +765,8 @@ class VentasController extends Controller
 
     private function estadoPagosCliente(Request $request)
     {
-        $clientes = $this->clientesConEstado($request);
-
-        // Paginación manual
-        $pagina = $request->get('page', 1);
-        $porPagina = 10;
-        $items = $clientes->values();
-
-        $clientesPaginados = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items->forPage($pagina, $porPagina),
-            $items->count(),
-            $porPagina,
-            $pagina,
-            [
-                'path' => $request->url(),
-                'query' => $request->query(),
-            ]
-        );
-
         return [
-            'clientes' => $clientesPaginados,
+            'clientes' => $this->clientesConEstado($request)->values(),
             'filtros' => $request->all(),
         ];
     }

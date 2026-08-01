@@ -1,6 +1,7 @@
 @push('scripts')
 <script>
     const ticketBaseUrl = "{{ url('/tickets/reimprimir') }}";
+    const ventaDetalleUrl = "{{ url('/api/ventas') }}";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
@@ -8,6 +9,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    let ventaIdActual = null;
 
     /*
     |--------------------------------------------------------------------------
@@ -165,80 +168,138 @@ document.getElementById('tablaEstadoPagos').addEventListener('click', function (
         '$' + parseFloat(total).toLocaleString();
 
     let estadoTexto = '';
-    let estadoClase = '';
+    let estadoBadge = '';
 
-    if (dias < 0) {
+    if (historial.length === 0 || isNaN(dias)) {
+        estadoTexto = 'SIN PAGOS';
+        estadoBadge = 'bg-dark';
+    } else if (dias < 0) {
         estadoTexto = 'VENCIDO';
-        estadoClase = 'text-danger';
+        estadoBadge = 'bg-danger';
     } else if (dias <= 7) {
         estadoTexto = 'PRÓXIMO A VENCER';
-        estadoClase = 'text-warning';
+        estadoBadge = 'bg-warning text-dark';
     } else {
         estadoTexto = 'AL CORRIENTE';
-        estadoClase = 'text-success';
+        estadoBadge = 'bg-success';
     }
 
     const estado = document.getElementById('detalleEstado');
     estado.innerText = estadoTexto;
-    estado.className = estadoClase;
+    estado.className = 'badge ' + estadoBadge;
 
     let html = '';
 
     if (historial.length === 0) {
-        html = '<div class="text-muted">Sin historial de pagos</div>';
+        html = '<div class="text-muted text-center py-3">Sin historial de pagos</div>';
     } else {
+        html = '<div class="timeline-pagos">';
+
         historial.forEach(pago => {
-            const botonTicket = pago.venta_id ? `
+            const botonVerPago = pago.venta_id ? `
     <button type="button"
-            class="btn btn-link p-0 ms-2 text-primary btn-reimprimir-ticket"
+            class="btn btn-link p-0 text-primary btn-ver-pago"
             data-id="${pago.venta_id}"
-            title="Reimprimir ticket"
-            style="text-decoration:none;">
-        <i class="material-icons" style="font-size:18px; vertical-align:middle;">receipt_long</i>
+            style="text-decoration:none; font-size:.75rem;">
+        Ver venta
     </button>
 ` : '';
 
-            let colorEstado = 'text-secondary';
+            let colorEstado = 'secondary';
             if (['pagado', 'cobrado'].includes(pago.estado.toLowerCase())) {
-                colorEstado = 'text-success';
+                colorEstado = 'success';
             } else if (pago.estado.toLowerCase() === 'pendiente') {
-                colorEstado = 'text-warning';
+                colorEstado = 'warning';
             } else if (pago.estado.toLowerCase() === 'vencido') {
-                colorEstado = 'text-danger';
+                colorEstado = 'danger';
             }
+            const textoClaro = colorEstado === 'warning' ? 'text-dark' : '';
 
             html += `
-                <div class="d-flex align-items-start mb-3">
-                    <span class="bg-success rounded-circle me-2 mt-1" style="width:8px;height:8px;"></span>
-                    <div class="flex-grow-1">
-                        <small class="fw-bold text-secondary">Pago mensualidad (${pago.fecha})</small>
-                        ${botonTicket}<br>
-                        <small>
-                            $${parseFloat(pago.total).toLocaleString()}
-                            - <span class="${colorEstado}">${pago.estado.toUpperCase()}</span>
-                        </small>
+                <div class="d-flex align-items-start pago-item">
+                    <span class="dot-estado bg-${colorEstado}"></span>
+                    <div class="flex-grow-1 d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="fw-bold text-dark d-block">${pago.fecha}</small>
+                            <span class="badge bg-${colorEstado} ${textoClaro} mt-1">${pago.estado.toUpperCase()}</span>
+                        </div>
+                        <div class="text-end">
+                            <small class="fw-bold d-block">$${parseFloat(pago.total).toLocaleString()}</small>
+                            ${botonVerPago}
+                        </div>
                     </div>
                 </div>
             `;
         });
+
+        html += '</div>';
     }
 
     document.getElementById('detalleHistorial').innerHTML = html;
 
-    document.querySelectorAll('.btn-reimprimir-ticket').forEach(btn => {
+    document.querySelectorAll('.btn-ver-pago').forEach(btn => {
         btn.addEventListener('click', function () {
-            const ventaId = this.dataset.id;
-            const iframe = document.getElementById('iframeTicket');
-            iframe.onload = function () {
-                this.contentWindow.focus();
-                this.contentWindow.print();
-            };
-            iframe.src = `${ticketBaseUrl}/${ventaId}`;
+            ventaIdActual = this.dataset.id;
+
+            fetch(`${ventaDetalleUrl}/${ventaIdActual}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error de red');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('pago_cliente').textContent = data.cliente ?? '—';
+                    document.getElementById('pago_paquete').textContent = data.paquete ?? '—';
+                    document.getElementById('pago_paquete_precio').textContent =
+                        `$${parseFloat(data.paquete_precio ?? 0).toLocaleString()} / mes`;
+                    document.getElementById('pago_fecha').textContent =
+                        data.fecha_venta ? `${data.fecha_venta}${data.hora_venta ? ' · ' + data.hora_venta : ''}` : '—';
+                    document.getElementById('pago_periodo').textContent =
+                        (data.periodo_inicio && data.periodo_fin) ? `${data.periodo_inicio} - ${data.periodo_fin}` : '—';
+                    document.getElementById('pago_meses').textContent = data.meses ?? '—';
+                    document.getElementById('pago_tipo').textContent = data.tipo_pago ?? '—';
+                    document.getElementById('pago_subtotal').textContent = `$${parseFloat(data.subtotal ?? 0).toLocaleString()}`;
+                    document.getElementById('pago_descuento').textContent = `− $${parseFloat(data.descuento ?? 0).toLocaleString()}`;
+                    document.getElementById('pago_recargo_domicilio').textContent = `+ $${parseFloat(data.recargo_domicilio ?? 0).toLocaleString()}`;
+                    document.getElementById('pago_recargo_atraso').textContent = `+ $${parseFloat(data.recargo_atraso ?? 0).toLocaleString()}`;
+                    document.getElementById('pago_registrado_por').textContent = data.registrado_por ?? '—';
+                    document.getElementById('pago_total').textContent = `$${parseFloat(data.total ?? 0).toLocaleString()}`;
+
+                    let colorEstado = 'secondary';
+                    const estadoLower = (data.estado ?? '').toLowerCase();
+                    if (['pagado', 'cobrado'].includes(estadoLower)) {
+                        colorEstado = 'success';
+                    } else if (estadoLower === 'pendiente') {
+                        colorEstado = 'warning';
+                    } else if (estadoLower === 'vencido') {
+                        colorEstado = 'danger';
+                    }
+                    const estadoBadge = document.getElementById('pago_estado');
+                    estadoBadge.textContent = (data.estado ?? '—').toUpperCase();
+                    estadoBadge.className = `badge bg-${colorEstado} ${colorEstado === 'warning' ? 'text-dark' : ''}`;
+
+                    const modal = new bootstrap.Modal(document.getElementById('modalDetallePago'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error al cargar el pago:', error);
+                    alert('Hubo un problema al cargar los datos del pago.');
+                });
         });
     });
 
     document.querySelectorAll('.fila-cliente').forEach(f => f.classList.remove('table-active'));
     fila.classList.add('table-active');
+});
+
+document.getElementById('btnReimprimirTicketPago').addEventListener('click', function () {
+    if (!ventaIdActual) return;
+
+    const iframe = document.getElementById('iframeTicket');
+    iframe.onload = function () {
+        this.contentWindow.focus();
+        this.contentWindow.print();
+    };
+    iframe.src = `${ticketBaseUrl}/${ventaIdActual}`;
 });
 });
 </script>
@@ -273,7 +334,7 @@ $(document).ready(function () {
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
         },
-        order: [[4, 'asc']]
+        order: [[5, 'asc']]
     });
 });
 </script>
