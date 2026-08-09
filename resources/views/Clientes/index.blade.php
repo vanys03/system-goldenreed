@@ -7,11 +7,16 @@
             <div class="table-responsive p-3">
                 <div class="d-flex justify-content-between align-items-center px-3 pt-3">
                     <h5 class="mb-0">Lista de Clientes</h5>
-                    @can('Crear clientes')
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
-                            <span class="material-icons align-middle">add</span> Agregar Cliente
-                        </button>
-                    @endcan
+                    <div>
+                        @can('Crear clientes')
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
+                                <span class="material-icons align-middle">add</span> Agregar Cliente
+                            </button>
+                        @endcan
+                        <a class="btn btn-outline-dark" href="{{ route('clientes.contrato-blanco') }}" target="_blank">
+                            <span class="material-icons align-middle">description</span> Imprimir contrato en blanco
+                        </a>
+                    </div>
                 </div>
 
                 {{-- Loader --}}
@@ -60,7 +65,11 @@
                                         <p class="text-xs mb-0" style="white-space: normal;">{{ $cliente->tipo }}</p>
                                     </td>
                                     <td class="text-center">
-                                        
+
+                                            <a class="btn btn-link text-dark p-0 mx-1" title="Imprimir contrato"
+                                                href="{{ route('clientes.contrato', $cliente->id) }}" target="_blank">
+                                                <span class="material-icons">description</span>
+                                            </a>
                                             <button class="btn btn-link text-success p-0 mx-1 btn-modal" title="Editar"
                                                 data-url="{{ route('clientes.edit-modal', $cliente->id) }}">
                                                 <span class="material-icons">edit</span>

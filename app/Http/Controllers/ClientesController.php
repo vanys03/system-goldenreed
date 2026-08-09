@@ -7,13 +7,15 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Cliente;
+use App\Models\Contador;
 use App\Models\Paquete;
+use App\Services\ContratoPdfService;
 
 class ClientesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:Ver clientes')->only(['index', 'show']);
+        $this->middleware('permission:Ver clientes')->only(['index', 'show', 'contrato', 'contratoBlanco']);
         $this->middleware('permission:Crear clientes')->only(['create', 'store']);
         $this->middleware('permission:Editar clientes')->only(['edit', 'update']);
         $this->middleware('permission:Eliminar clientes')->only('destroy');
@@ -78,6 +80,8 @@ class ClientesController extends Controller
         $data = $request->except('documento');
         $data['activo'] = true;
 
+        $data['folio'] = Contador::siguienteFolioCliente();
+
         $cliente = Cliente::create($data);
 
         if ($request->hasFile('documento')) {
@@ -108,7 +112,29 @@ class ClientesController extends Controller
 
         return redirect()
             ->route('clientes.index')
-            ->with('success', 'Cliente creado exitosamente.');
+            ->with('success', 'Cliente creado exitosamente.')
+            ->with('contrato_url', route('clientes.contrato', $cliente->id));
+    }
+
+    public function contrato(Cliente $cliente, ContratoPdfService $contratoPdfService)
+    {
+        $pdf = $contratoPdfService->generar($cliente);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="contrato-' . $cliente->id . '.pdf"',
+        ]);
+    }
+
+    public function contratoBlanco(ContratoPdfService $contratoPdfService)
+    {
+        $siguienteFolio = Contador::previewSiguienteFolioCliente();
+        $pdf = $contratoPdfService->generarBlanco($siguienteFolio);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="contrato-en-blanco.pdf"',
+        ]);
     }
 
     public function edit($id)

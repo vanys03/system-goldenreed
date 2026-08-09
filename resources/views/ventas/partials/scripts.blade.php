@@ -146,6 +146,20 @@ $('#tipo_cliente_badge').html(`
     document.addEventListener('DOMContentLoaded', function () {
         const btnConfirmar = document.getElementById('btnConfirmarVenta');
         const btnEnviar = document.getElementById('btnEnviarFormulario');
+        const inputMontoRecibido = document.getElementById('modal_monto_recibido');
+        const avisoInsuficiente = document.getElementById('avisoEfectivoInsuficiente');
+
+        function totalVenta() {
+            return parseFloat(document.getElementById('total').value || 0);
+        }
+
+        function actualizarCambio() {
+            const cambio = parseFloat(inputMontoRecibido.value || 0) - totalVenta();
+            document.getElementById('resumen_cambio').textContent = (cambio > 0 ? cambio : 0).toFixed(2);
+            avisoInsuficiente.classList.add('d-none');
+        }
+
+        inputMontoRecibido.addEventListener('input', actualizarCambio);
 
         btnConfirmar.addEventListener('click', function () {
             const clienteId = document.getElementById('cliente_id').value;
@@ -168,7 +182,7 @@ $('#tipo_cliente_badge').html(`
             const descuento = parseFloat(document.getElementById('descuento').value || 0).toFixed(2);
             const recargoDomicilio = parseFloat(document.getElementById('recargo_domicilio').value || 0).toFixed(2);
             const recargoFaltaPago = parseFloat(document.getElementById('recargo_falta_pago').value || 0).toFixed(2);
-            const total = parseFloat(document.getElementById('total').value || 0).toFixed(2);
+            const total = totalVenta();
 
             // Colocar en el resumen
             document.getElementById('resumen_cliente').textContent = cliente;
@@ -178,7 +192,13 @@ $('#tipo_cliente_badge').html(`
             document.getElementById('resumen_tipo_pago').textContent = tipoPago;
             document.getElementById('resumen_recargo_domicilio').textContent = recargoDomicilio;
             document.getElementById('resumen_recargo_falta_pago').textContent = recargoFaltaPago;
-            document.getElementById('resumen_total').textContent = total;
+            document.getElementById('resumen_total').textContent = total.toFixed(2);
+            document.getElementById('resumen_dia_pago').textContent = document.getElementById('dia_pago').value || '—';
+
+            // Por defecto se asume pago exacto; el usuario lo ajusta si entrega otra cantidad
+            inputMontoRecibido.value = total.toFixed(2);
+            document.getElementById('resumen_cambio').textContent = '0.00';
+            avisoInsuficiente.classList.add('d-none');
 
             // Mostrar el modal
             const modal = new bootstrap.Modal(document.getElementById('modalConfirmarVenta'));
@@ -186,15 +206,23 @@ $('#tipo_cliente_badge').html(`
         });
 
         btnEnviar.addEventListener('click', function () {
-    // Desactivar el botón inmediatamente
-    this.disabled = true;
+            const montoRecibido = parseFloat(inputMontoRecibido.value || 0);
 
-    // Cambiar texto o icono si deseas retroalimentación visual
-    this.innerHTML = '<i class="material-icons me-1">hourglass_top</i> Procesando...';
+            if (montoRecibido < totalVenta()) {
+                avisoInsuficiente.classList.remove('d-none');
+                inputMontoRecibido.focus();
+                return;
+            }
 
-    // Enviar el formulario
-    document.getElementById('formCrearVenta').submit();
-});
+            // Desactivar el botón inmediatamente
+            this.disabled = true;
+
+            // Cambiar texto o icono si deseas retroalimentación visual
+            this.innerHTML = '<i class="material-icons me-1">hourglass_top</i> Procesando...';
+
+            // Enviar el formulario
+            document.getElementById('formCrearVenta').submit();
+        });
 
     });
 </script>

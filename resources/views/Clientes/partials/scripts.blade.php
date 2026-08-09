@@ -1,4 +1,9 @@
 @push('scripts')
+@if(session('contrato_url'))
+<script>
+    window.open('{{ session('contrato_url') }}', '_blank');
+</script>
+@endif
 <script>
     const tablaClientes = $('#tabla-clientes');
     if (tablaClientes.length) {

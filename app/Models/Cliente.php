@@ -14,6 +14,7 @@ class Cliente extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
+        'folio',
         'nombre',
         'telefono1',
         'telefono2',
