@@ -139,59 +139,61 @@
         </div>
 
         <div class="card m-4 p-4">
-            <h5>Historial de Ventas de Hoy</h5>
+                <h5>Historial de Ventas de Hoy</h5>
 
             @if($ventasHoy->isEmpty())
                 <p>No hay ventas registradas hoy.</p>
             @else
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Usuario</th>
-                            <th>Fecha Venta</th>
-                            <th>Método de pago</th>
-                            <th>Total</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($ventasHoy as $venta)
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>{{ $venta->cliente->nombre }}</td>
-                                <td>{{ $venta->usuario->name }}</td>
-                                <td>{{ $venta->created_at->format('Y-m-d') }}
-                                    <br><small>{{ $venta->created_at->format('h:i A') }}</small>
-                                </td>
-                                <td>{{ ucfirst($venta->tipo_pago ?? 'N/A') }}</td>
-                                <td>${{ number_format($venta->total, 2) }}</td>
-                                <td class="text-center">
-                                    <button class="btn btn-link text-info p-0 mx-1 btn-ver-venta" title="Ver"
-                                        data-id="{{ $venta->id }}" data-bs-toggle="modal" data-bs-target="#modalDetalleVenta">
-                                        <span class="material-icons">visibility</span>
-                                    </button>
-                                    @can('Editar ventas')
-                                        <a href="{{ route('ventas.index', ['editar' => $venta->id]) }}"
-                                            class="btn btn-link text-warning p-0 mx-1" title="Editar">
-                                            <span class="material-icons">edit</span>
-                                        </a>
-                                    @endcan
-
-                                    @can('Eliminar ventas')
-
-
-                                        <button type="button" class="btn btn-link text-danger p-0 mx-1 btn-modalEliminarVenta"
-                                            data-id="{{ $venta->id }}" data-cliente="{{ $venta->cliente->nombre }}"
-                                            title="Eliminar">
-                                            <span class="material-icons">delete_forever</span>
-                                        </button>
-                                    @endcan
-                                </td>
-
+                                <th>Cliente</th>
+                                <th>Usuario</th>
+                                <th>Fecha Venta</th>
+                                <th>Método de pago</th>
+                                <th>Total</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach ($ventasHoy as $venta)
+                                <tr>
+                                    <td>{{ $venta->cliente->nombre }}</td>
+                                    <td>{{ $venta->usuario->name }}</td>
+                                    <td>{{ $venta->created_at->format('Y-m-d') }}
+                                        <br><small>{{ $venta->created_at->format('h:i A') }}</small>
+                                    </td>
+                                    <td>{{ ucfirst($venta->tipo_pago ?? 'N/A') }}</td>
+                                    <td>${{ number_format($venta->total, 2) }}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-link text-info p-0 mx-1 btn-ver-venta" title="Ver"
+                                            data-id="{{ $venta->id }}" data-bs-toggle="modal" data-bs-target="#modalDetalleVenta">
+                                            <span class="material-icons">visibility</span>
+                                        </button>
+                                        @can('Editar ventas')
+                                            <a href="{{ route('ventas.index', ['editar' => $venta->id]) }}"
+                                                class="btn btn-link text-warning p-0 mx-1" title="Editar">
+                                                <span class="material-icons">edit</span>
+                                            </a>
+                                        @endcan
+
+                                        @can('Eliminar ventas')
+
+
+                                            <button type="button" class="btn btn-link text-danger p-0 mx-1 btn-modalEliminarVenta"
+                                                data-id="{{ $venta->id }}" data-cliente="{{ $venta->cliente->nombre }}"
+                                                title="Eliminar">
+                                                <span class="material-icons">delete_forever</span>
+                                            </button>
+                                        @endcan
+                                    </td>
+
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    
             @endif
 
             <a href="{{ route('ventas.historial') }}" class="btn btn-secondary">Ver historial completo</a>
