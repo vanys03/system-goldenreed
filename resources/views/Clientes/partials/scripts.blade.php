@@ -8,13 +8,23 @@
     const tablaClientes = $('#tabla-clientes');
     if (tablaClientes.length) {
         tablaClientes.DataTable({
+            processing: false,
+            serverSide: true,
+            ajax: '{{ route('clientes.data') }}',
             pageLength: 10,
             deferRender: true,
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
             },
-            columnDefs: [
-                { orderable: false, targets: 5 }
+            columns: [
+                { data: 'nombre', name: 'nombre' },
+                { data: 'telefono1', name: 'telefono1' },
+                { data: 'telefono2', name: 'telefono2' },
+                { data: 'dia_cobro', name: 'dia_cobro' },
+                { data: 'referencias', name: 'referencias' },
+                { data: 'tipo', name: 'tipo', orderable: false },
+                { data: 'acciones', name: 'acciones', orderable: false, searchable: false },
+                { data: 'estado', name: 'estado', searchable: false }
             ],
             order: [],
             initComplete: function () {

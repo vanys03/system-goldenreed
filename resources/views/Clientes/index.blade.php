@@ -24,83 +24,21 @@
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
 
-                @if (!$clientes->isEmpty())
-                    <table id="tabla-clientes" class="table align-items-center mb-0 w-100 d-none">
-                        <thead>
-                            <tr>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Nombre</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Teléfono 1</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Teléfono 2</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Día de cobro</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Referencias</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Tipo</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Acciones</th>
-                                <th class="text-uppercase text-dark text-xs font-weight-bolder">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($clientes as $cliente)
-                                <tr>
-                                    <td>
-                                     <h6 class="mb-0 text-xs 
-    {{ $cliente->tipo === 'A' ? 'text-danger' : ($cliente->tipo === 'C' ? 'text-info' : '') }}">
-    {{ $cliente->nombre }}
-</h6>
-
-
-                                    </td>
-                                    <td>
-                                        <p class="text-xs mb-0">{{ $cliente->telefono1 }}</p>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs mb-0">{{ $cliente->telefono2 }}</p>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs mb-0 text-warning">{{ $cliente->dia_cobro }}</p>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs mb-0" style="white-space: normal;">{{ $cliente->referencias }}</p>
-                                    </td>
-                                    <td>
-                                        <p class="text-xs mb-0" style="white-space: normal;">{{ $cliente->tipo }}</p>
-                                    </td>
-                                    <td class="text-center">
-
-                                            <a class="btn btn-link text-dark p-0 mx-1" title="Imprimir contrato"
-                                                href="{{ route('clientes.contrato', $cliente->id) }}" target="_blank">
-                                                <span class="material-icons">description</span>
-                                            </a>
-                                            <button class="btn btn-link text-success p-0 mx-1 btn-modal" title="Editar"
-                                                data-url="{{ route('clientes.edit-modal', $cliente->id) }}">
-                                                <span class="material-icons">edit</span>
-                                            </button>
-                                            @can('Eliminar clientes')
-<button class="btn btn-link text-danger p-0 mx-1 btn-modal"
-    title="Eliminar"
-    data-url="{{ route('clientes.delete-modal', $cliente->id) }}">
-    <span class="material-icons">delete</span>
-</button>
-@endcan
-
-                                        
-                                    </td>
-                                    
-                                    <td>
-                                        @if ($cliente->activo)
-                                            <span class="badge bg-success text-white text-xs">Activo</span>
-                                            @else
-                                            <span class="badge bg-secondary text-white text-xs">Inactivo</span>
-                                        @endif
-                                    </td>             
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @else
-                    <div class="text-center text-xs py-4">
-                        No hay clientes registrados.
-                    </div>
-                @endif
+                <table id="tabla-clientes" class="table align-items-center mb-0 w-100 d-none">
+                    <thead>
+                        <tr>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Nombre</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Teléfono 1</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Teléfono 2</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Día de cobro</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Referencias</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Tipo</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Acciones</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 

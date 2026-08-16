@@ -131,6 +131,7 @@ Route::middleware(['auth', NoCache::class])->group(function () {
     Route::resource('usuarios', UsuariosController::class);
     Route::resource('roles', RolesController::class);
 
+    Route::get('clientes/data', [ClientesController::class, 'data'])->name('clientes.data');
     Route::get('clientes/{id}/edit-modal', [ClientesController::class, 'editModal'])->name('clientes.edit-modal');
     Route::get('clientes/{id}/delete-modal', [ClientesController::class, 'deleteModal'])->name('clientes.delete-modal');
     Route::get('clientes/{cliente}/contrato', [ClientesController::class, 'contrato'])->name('clientes.contrato');

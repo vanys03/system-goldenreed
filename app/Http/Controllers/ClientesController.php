@@ -10,12 +10,13 @@ use App\Models\Cliente;
 use App\Models\Contador;
 use App\Models\Paquete;
 use App\Services\ContratoPdfService;
+use Yajra\DataTables\Facades\DataTables;
 
 class ClientesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:Ver clientes')->only(['index', 'show', 'contrato', 'contratoBlanco']);
+        $this->middleware('permission:Ver clientes')->only(['index', 'data', 'show', 'contrato', 'contratoBlanco']);
         $this->middleware('permission:Crear clientes')->only(['create', 'store']);
         $this->middleware('permission:Editar clientes')->only(['edit', 'update']);
         $this->middleware('permission:Eliminar clientes')->only('destroy');
@@ -23,10 +24,48 @@ class ClientesController extends Controller
 
     public function index()
     {
-        $clientes = Cliente::all();
         $paquetes = Paquete::all();
 
-        return view('clientes.index', compact('clientes', 'paquetes'));
+        return view('clientes.index', compact('paquetes'));
+    }
+
+    public function data()
+    {
+        $query = Cliente::select(['id', 'nombre', 'telefono1', 'telefono2', 'dia_cobro', 'referencias', 'tipo', 'activo']);
+
+        return DataTables::eloquent($query)
+            ->editColumn('nombre', function ($cliente) {
+                $colorClass = $cliente->tipo === 'A' ? 'text-danger' : ($cliente->tipo === 'C' ? 'text-info' : '');
+                return '<h6 class="mb-0 text-xs ' . $colorClass . '">' . e($cliente->nombre) . '</h6>';
+            })
+            ->editColumn('telefono1', fn($cliente) => '<p class="text-xs mb-0">' . e($cliente->telefono1) . '</p>')
+            ->editColumn('telefono2', fn($cliente) => '<p class="text-xs mb-0">' . e($cliente->telefono2) . '</p>')
+            ->editColumn('dia_cobro', fn($cliente) => '<p class="text-xs mb-0 text-warning">' . e($cliente->dia_cobro) . '</p>')
+            ->editColumn('referencias', fn($cliente) => '<p class="text-xs mb-0" style="white-space: normal;">' . e($cliente->referencias) . '</p>')
+            ->editColumn('tipo', fn($cliente) => '<p class="text-xs mb-0" style="white-space: normal;">' . e($cliente->tipo) . '</p>')
+            ->addColumn('acciones', function ($cliente) {
+                $html = '<a class="btn btn-link text-dark p-0 mx-1" title="Imprimir contrato" href="'
+                    . route('clientes.contrato', $cliente->id) . '" target="_blank">'
+                    . '<span class="material-icons">description</span></a>';
+
+                $html .= '<button class="btn btn-link text-success p-0 mx-1 btn-modal" title="Editar" data-url="'
+                    . route('clientes.edit-modal', $cliente->id) . '">'
+                    . '<span class="material-icons">edit</span></button>';
+
+                if (auth()->user()->can('Eliminar clientes')) {
+                    $html .= '<button class="btn btn-link text-danger p-0 mx-1 btn-modal" title="Eliminar" data-url="'
+                        . route('clientes.delete-modal', $cliente->id) . '">'
+                        . '<span class="material-icons">delete</span></button>';
+                }
+
+                return $html;
+            })
+            ->addColumn('estado', fn($cliente) => $cliente->activo
+                ? '<span class="badge bg-success text-white text-xs">Activo</span>'
+                : '<span class="badge bg-secondary text-white text-xs">Inactivo</span>')
+            ->orderColumn('estado', 'activo $1')
+            ->rawColumns(['nombre', 'telefono1', 'telefono2', 'dia_cobro', 'referencias', 'tipo', 'acciones', 'estado'])
+            ->make(true);
     }
 
     public function create()
