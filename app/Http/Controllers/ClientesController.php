@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use App\Models\Cliente;
 use App\Models\Contador;
+use App\Models\Folio;
 use App\Models\Paquete;
 use App\Services\ContratoPdfService;
 use Yajra\DataTables\Facades\DataTables;
@@ -16,8 +19,8 @@ class ClientesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:Ver clientes')->only(['index', 'data', 'show', 'contrato', 'contratoBlanco']);
-        $this->middleware('permission:Crear clientes')->only(['create', 'store']);
+        $this->middleware('permission:Ver clientes')->only(['index', 'data', 'show', 'contrato', 'contratoBlanco', 'foliosDisponibles']);
+        $this->middleware('permission:Crear clientes')->only(['create', 'store', 'contratoBlanco']);
         $this->middleware('permission:Editar clientes')->only(['edit', 'update']);
         $this->middleware('permission:Eliminar clientes')->only('destroy');
     }
@@ -25,8 +28,18 @@ class ClientesController extends Controller
     public function index()
     {
         $paquetes = Paquete::all();
+        $folios = Folio::whereNull('cliente_id')->orderBy('numero')->get();
 
-        return view('clientes.index', compact('paquetes'));
+        return view('clientes.index', compact('paquetes', 'folios'));
+    }
+
+    public function foliosDisponibles()
+    {
+        $folios = Folio::whereNull('cliente_id')
+            ->orderBy('numero')
+            ->get(['id', 'numero', 'impreso_at']);
+
+        return response()->json($folios);
     }
 
     public function data()
@@ -97,6 +110,7 @@ class ClientesController extends Controller
         ]);
 
         $request->validate([
+            'folio_id' => ['required', Rule::exists('folios', 'id')->whereNull('cliente_id')],
             'nombre' => 'required|string|max:120',
             'telefono1' => 'nullable|string|max:20',
             'telefono2' => 'nullable|string|max:20',
@@ -114,14 +128,24 @@ class ClientesController extends Controller
             'zona' => 'nullable|string|max:255',
             'tipo' => 'required|in:A,B,C',
             'documento' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+        ], [
+            'folio_id.required' => 'Selecciona el folio del contrato impreso.',
+            'folio_id.exists' => 'El folio seleccionado ya no está disponible, elige otro.',
         ]);
 
-        $data = $request->except('documento');
+        $data = $request->except(['documento', 'folio_id']);
         $data['activo'] = true;
 
-        $data['folio'] = Contador::siguienteFolioCliente();
+        $cliente = DB::transaction(function () use ($request, $data) {
+            $folio = Folio::whereNull('cliente_id')->lockForUpdate()->findOrFail($request->folio_id);
 
-        $cliente = Cliente::create($data);
+            $data['folio'] = $folio->numero;
+            $cliente = Cliente::create($data);
+
+            $folio->update(['cliente_id' => $cliente->id]);
+
+            return $cliente;
+        });
 
         if ($request->hasFile('documento')) {
 
@@ -167,8 +191,14 @@ class ClientesController extends Controller
 
     public function contratoBlanco(ContratoPdfService $contratoPdfService)
     {
-        $siguienteFolio = Contador::previewSiguienteFolioCliente();
-        $pdf = $contratoPdfService->generarBlanco($siguienteFolio);
+        $folio = DB::transaction(function () {
+            return Folio::create([
+                'numero' => Contador::siguienteFolioCliente(),
+                'impreso_at' => now(),
+            ]);
+        });
+
+        $pdf = $contratoPdfService->generarBlanco($folio->numero);
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
