@@ -106,11 +106,17 @@ class ClientesController extends Controller
     public function store(Request $request)
     {
         $request->merge([
-            'tipo' => 'B'
+            'tipo' => 'B',
+            'folio_id' => $request->boolean('sin_folio') ? null : $request->folio_id,
         ]);
 
         $request->validate([
-            'folio_id' => ['required', Rule::exists('folios', 'id')->whereNull('cliente_id')],
+            'sin_folio' => 'nullable|boolean',
+            'folio_id' => [
+                Rule::requiredIf(!$request->boolean('sin_folio')),
+                'nullable',
+                Rule::exists('folios', 'id')->whereNull('cliente_id'),
+            ],
             'nombre' => 'required|string|max:120',
             'telefono1' => 'nullable|string|max:20',
             'telefono2' => 'nullable|string|max:20',
@@ -133,11 +139,15 @@ class ClientesController extends Controller
             'folio_id.exists' => 'El folio seleccionado ya no está disponible, elige otro.',
         ]);
 
-        $data = $request->except(['documento', 'folio_id']);
+        $data = $request->except(['documento', 'folio_id', 'sin_folio']);
         $data['activo'] = true;
 
         $cliente = DB::transaction(function () use ($request, $data) {
-            $folio = Folio::whereNull('cliente_id')->lockForUpdate()->findOrFail($request->folio_id);
+            if ($request->boolean('sin_folio')) {
+                $folio = Folio::create(['numero' => Contador::siguienteFolioCliente()]);
+            } else {
+                $folio = Folio::whereNull('cliente_id')->lockForUpdate()->findOrFail($request->folio_id);
+            }
 
             $data['folio'] = $folio->numero;
             $cliente = Cliente::create($data);

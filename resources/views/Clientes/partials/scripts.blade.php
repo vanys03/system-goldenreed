@@ -39,10 +39,32 @@
         setTimeout(refrescarFoliosDisponibles, 1500);
     });
 
-    function refrescarFoliosDisponibles() {
+    function actualizarEstadoFolio() {
+        const checkbox = document.getElementById('check-sin-folio');
         const select = document.getElementById('select-folio-cliente');
         const aviso = document.getElementById('sin-folios-disponibles');
         const btnGuardar = document.getElementById('btn-guardar-cliente');
+
+        if (!select) {
+            return;
+        }
+
+        const sinFolio = checkbox?.checked ?? false;
+        const hayFolios = select.options.length > 1;
+
+        select.disabled = sinFolio || !hayFolios;
+        select.required = !sinFolio;
+
+        if (aviso) {
+            aviso.classList.toggle('d-none', sinFolio || hayFolios);
+        }
+        if (btnGuardar) {
+            btnGuardar.disabled = !sinFolio && !hayFolios;
+        }
+    }
+
+    function refrescarFoliosDisponibles() {
+        const select = document.getElementById('select-folio-cliente');
 
         if (!select) {
             return;
@@ -65,21 +87,15 @@
                     select.appendChild(option);
                 });
 
-                const hayFolios = folios.length > 0;
-                select.disabled = !hayFolios;
-                if (aviso) {
-                    aviso.classList.toggle('d-none', hayFolios);
-                }
-                if (btnGuardar) {
-                    btnGuardar.disabled = !hayFolios;
-                }
-
                 if (folios.some(f => String(f.id) === seleccionActual)) {
                     select.value = seleccionActual;
                 }
+
+                actualizarEstadoFolio();
             });
     }
 
+    document.getElementById('check-sin-folio')?.addEventListener('change', actualizarEstadoFolio);
     document.getElementById('modalCrearCliente')?.addEventListener('show.bs.modal', refrescarFoliosDisponibles);
 </script>
 @endpush

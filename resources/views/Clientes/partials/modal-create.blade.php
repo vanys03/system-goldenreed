@@ -50,27 +50,36 @@
         <div class="modal-body px-4 pb-2 pt-3">
 
           {{-- Folio del contrato impreso --}}
-          <div class="d-flex align-items-start gap-3 p-3 mb-4 rounded-3" style="background:#f8f9fa;">
-            <i class="material-icons text-secondary">confirmation_number</i>
-            <div class="flex-grow-1">
-              <label for="select-folio-cliente" class="text-secondary text-uppercase text-xs fw-bold d-block mb-1">
-                Folio del contrato
-              </label>
-              <select name="folio_id" id="select-folio-cliente" class="form-select form-select-sm border rounded-2" required
-                {{ $folios->isEmpty() ? 'disabled' : '' }}>
-                <option value="">-- Selecciona un folio --</option>
-                @foreach ($folios as $folio)
-                  <option value="{{ $folio->id }}">
-                    GD{{ sprintf('%04d', $folio->numero) }}
-                    @if ($folio->impreso_at)
-                      — impreso {{ $folio->impreso_at->format('d/m/Y H:i') }}
-                    @endif
-                  </option>
-                @endforeach
-              </select>
-              <div id="sin-folios-disponibles" class="text-danger text-xs mt-1 {{ $folios->isEmpty() ? '' : 'd-none' }}">
-                No hay folios disponibles. Imprime un contrato en blanco primero.
+          <div class="p-3 mb-4 rounded-3" style="background:#f8f9fa;">
+            <div class="d-flex align-items-start gap-3">
+              <i class="material-icons text-secondary">confirmation_number</i>
+              <div class="flex-grow-1">
+                <label for="select-folio-cliente" class="text-secondary text-uppercase text-xs fw-bold d-block mb-1">
+                  Folio del contrato
+                </label>
+                <select name="folio_id" id="select-folio-cliente" class="form-select form-select-sm border rounded-2" required
+                  {{ $folios->isEmpty() ? 'disabled' : '' }}>
+                  <option value="">-- Selecciona un folio --</option>
+                  @foreach ($folios as $folio)
+                    <option value="{{ $folio->id }}">
+                      GD{{ sprintf('%04d', $folio->numero) }}
+                      @if ($folio->impreso_at)
+                        — impreso {{ $folio->impreso_at->format('d/m/Y H:i') }}
+                      @endif
+                    </option>
+                  @endforeach
+                </select>
+                <div id="sin-folios-disponibles" class="text-danger text-xs mt-1 {{ $folios->isEmpty() ? '' : 'd-none' }}">
+                  No hay folios disponibles. Imprime un contrato en blanco primero.
+                </div>
               </div>
+            </div>
+
+            <div class="form-check mt-2 ps-4 ms-1">
+              <input class="form-check-input" type="checkbox" name="sin_folio" value="1" id="check-sin-folio">
+              <label class="form-check-label text-xs text-secondary" for="check-sin-folio">
+                No tengo un folio impreso — asignar el siguiente folio de la numeración automáticamente
+              </label>
             </div>
           </div>
 
