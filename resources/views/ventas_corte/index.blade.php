@@ -1,3 +1,35 @@
+@push('styles')
+    <style>
+        .corte-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            letter-spacing: .2px;
+            border: 1px solid transparent;
+        }
+        .corte-badge i.fa-circle { font-size: 8px; }
+
+        .corte-badge-danger   { background:#fdecea; color:#a5222f; border-color:#f3b8bd; }
+        .corte-badge-warning  { background:#fff6df; color:#8a6410; border-color:#f4dfa0; }
+        .corte-badge-info     { background:#e5f6fb; color:#0b6577; border-color:#aee3f0; }
+        .corte-badge-secondary{ background:#f1f2f4; color:#5a6169; border-color:#dfe1e4; }
+
+        .corte-row-danger  { background:#fdf4f4; border-left: 4px solid #e35d6a; }
+        .corte-row-warning { background:#fefaf0; border-left: 4px solid #f2b90c; }
+        .corte-row-info    { background:#f2fafd; border-left: 4px solid #23c1e0; }
+
+        .corte-row-danger:hover,
+        .corte-row-warning:hover,
+        .corte-row-info:hover {
+            filter: brightness(0.98);
+        }
+    </style>
+@endpush
+
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage='ventas_corte' />
 
@@ -32,15 +64,15 @@
                             </p>
 
                             {{-- Leyenda de colores --}}
-                            <div class="d-flex flex-wrap gap-3 mb-3">
-                                <span class="badge px-3 py-2 fw-semibold" style="background:#f8d7da; color:#842029; border:1px solid #f5c2c7;">
-                                    <i class="fas fa-circle me-1" style="color:#dc3545;"></i> Meses sin pagar (&ge;30 días)
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="corte-badge corte-badge-danger">
+                                    <i class="fas fa-circle"></i> Meses sin pagar (&ge;30 días)
                                 </span>
-                                <span class="badge px-3 py-2 fw-semibold" style="background:#fff3cd; color:#664d03; border:1px solid #ffecb5;">
-                                    <i class="fas fa-circle me-1" style="color:#ffc107;"></i> Semanas sin pagar (7–29 días)
+                                <span class="corte-badge corte-badge-warning">
+                                    <i class="fas fa-circle"></i> Semanas sin pagar (7–29 días)
                                 </span>
-                                <span class="badge px-3 py-2 fw-semibold" style="background:#cff4fc; color:#055160; border:1px solid #b6effb;">
-                                    <i class="fas fa-circle me-1" style="color:#0dcaf0;"></i> Pocos días de atraso (1–6 días)
+                                <span class="corte-badge corte-badge-info">
+                                    <i class="fas fa-circle"></i> Pocos días de atraso (1–6 días)
                                 </span>
                             </div>
 
@@ -75,31 +107,31 @@
                                                             ? (int) \Carbon\Carbon::parse($periodoFin)->diffInDays(now())
                                                             : 999;
                                                         if ($diasAtraso >= 30) {
-                                                            $rowStyle = 'background:#f8d7da;';
-                                                            $badgeClass = 'bg-danger';
+                                                            $rowClass = 'corte-row-danger';
+                                                            $badgeClass = 'corte-badge-danger';
                                                         } elseif ($diasAtraso >= 7) {
-                                                            $rowStyle = 'background:#fff3cd;';
-                                                            $badgeClass = 'bg-warning text-dark';
+                                                            $rowClass = 'corte-row-warning';
+                                                            $badgeClass = 'corte-badge-warning';
                                                         } else {
-                                                            $rowStyle = 'background:#cff4fc;';
-                                                            $badgeClass = 'bg-info text-dark';
+                                                            $rowClass = 'corte-row-info';
+                                                            $badgeClass = 'corte-badge-info';
                                                         }
                                                     @endphp
-                                                    <tr style="{{ $rowStyle }}">
+                                                    <tr class="{{ $rowClass }}">
                                                         <td class="fw-bold">{{ $cliente->nombre }}</td>
                                                         <td class="text-center">
                                                             @if($cliente->ventas->first())
-                                                                <span class="badge {{ $badgeClass }}">
+                                                                <span class="corte-badge {{ $badgeClass }}">
                                                                     {{ \Carbon\Carbon::parse($cliente->ventas->first()->periodo_fin)->translatedFormat('F Y') }}
                                                                 </span>
                                                             @else
-                                                                <span class="badge bg-secondary">
+                                                                <span class="corte-badge corte-badge-secondary">
                                                                     Sin pagos registrados
                                                                 </span>
                                                             @endif
                                                         </td>
                                                         <td class="text-center">
-                                                            <span class="badge {{ $badgeClass }}">
+                                                            <span class="corte-badge {{ $badgeClass }}">
                                                                 {{ $diasAtraso >= 999 ? '—' : "{$diasAtraso} día" . ($diasAtraso !== 1 ? 's' : '') }}
                                                             </span>
                                                         </td>
@@ -110,14 +142,10 @@
                                                                 style="cursor:pointer; transform: scale(1.2);">
                                                         </td>
                                                         <td class="text-center">
-                                                            <form method="POST"
-                                                                action="{{ route('clientes.deshabilitar', $cliente->id) }}">
-                                                                @csrf
-                                                                <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                                                    onclick="return confirm('¿Seguro que deseas deshabilitar a este cliente?')">
-                                                                    <i class="fas fa-user-slash"></i> Deshabilitar
-                                                                </button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-abrir-deshabilitar"
+                                                                data-modal-id="modalDeshabilitarCliente{{ $cliente->id }}">
+                                                                <i class="fas fa-user-slash"></i> Deshabilitar
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -154,10 +182,10 @@
                                             </thead>
                                             <tbody>
                                                 @foreach($clientesPendientesHoy as $cliente)
-                                                    <tr style="background:#cff4fc;">
+                                                    <tr class="corte-row-info">
                                                         <td class="fw-bold">{{ $cliente->nombre }}</td>
                                                         <td>
-                                                            <span class="badge bg-light text-dark border">
+                                                            <span class="corte-badge corte-badge-secondary">
                                                                 {{ $cliente->paquete->nombre ?? '—' }}
                                                             </span>
                                                         </td>
@@ -170,19 +198,10 @@
                                                                 style="cursor:pointer; transform: scale(1.2);">
                                                         </td>
                                                         <td class="text-center">
-                                                            <form method="POST"
-                                                                action="{{ route('clientes.deshabilitar', $cliente->id) }}"
-                                                                onsubmit="console.log('Enviando deshabilitar para cliente ID: {{ $cliente->id }}')">
-
-                                                                @csrf
-                                                                @method('PATCH')
-
-                                                                <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                                                    onclick="return confirm('¿Seguro que deseas deshabilitar a este cliente? (ID: {{ $cliente->id }})')">
-
-                                                                    <i class="fas fa-user-slash"></i> Deshabilitar
-                                                                </button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-abrir-deshabilitar"
+                                                                data-modal-id="modalDeshabilitarCliente{{ $cliente->id }}">
+                                                                <i class="fas fa-user-slash"></i> Deshabilitar
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -216,6 +235,29 @@
                 </div>
             </div>
         @endif
+
+        {{-- Modales de confirmación para deshabilitar clientes. Van fuera del modal de
+             "Clientes con Pagos Pendientes" de arriba: Bootstrap no soporta modales anidados,
+             lo que impedía que estas se abrieran. --}}
+        @foreach((($clientesPendientesAyer ?? collect())->concat($clientesPendientesHoy ?? collect())) as $cliente)
+            <x-confirm-modal
+                id="modalDeshabilitarCliente{{ $cliente->id }}"
+                title="Confirmar deshabilitación"
+                title2="¿Estás seguro de que deseas deshabilitar a {{ $cliente->nombre }}?"
+                message="El cliente quedará marcado como inactivo."
+                icon="person_off"
+                confirmText="Deshabilitar"
+                cancelText="Cancelar"
+                confirmClass="btn-exit"
+                cancelClass="btn-cancel"
+                :onConfirm="'document.getElementById(\'formDeshabilitarCliente' . $cliente->id . '\').submit();'"
+            />
+            <form id="formDeshabilitarCliente{{ $cliente->id }}"
+                action="{{ route('clientes.deshabilitar', $cliente->id) }}" method="POST"
+                class="d-none">
+                @csrf
+            </form>
+        @endforeach
 
 
         <div class="card m-4 p-4">
@@ -312,7 +354,25 @@
 
     </main>
 
+    @include('components.alert-toast')
+
     <script>
+        // Los botones "Deshabilitar" NO usan data-bs-toggle="modal": el manejador
+        // global de Bootstrap para ese atributo intenta cerrar cualquier ".modal.show"
+        // que ya esté en la página (incluyendo el modal de "Clientes con Pagos
+        // Pendientes", que se muestra a mano con clases y nunca tuvo una instancia
+        // real de Bootstrap), y truena con "Cannot read properties of null (reading
+        // 'hide')" antes de llegar a abrir la modal de confirmación. Por eso se abre
+        // manualmente con la API de JS, evitando ese manejador por completo.
+        document.querySelectorAll('.btn-abrir-deshabilitar').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                const modalEl = document.getElementById(boton.dataset.modalId);
+                if (modalEl) {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            });
+        });
+
         document.getElementById('btnFiltrar').addEventListener('click', filtrarCorte);
 
         function filtrarCorte() {

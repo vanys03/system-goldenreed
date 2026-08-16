@@ -264,6 +264,7 @@
 
         </div>
     </main>
+    @include('components.alert-toast')
     @include('dashboard.partials.modal-adeudo-cliente')
     @include('dashboard.partials.scripts')
     @include('dashboard.partials.script')

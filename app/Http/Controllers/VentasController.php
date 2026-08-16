@@ -278,6 +278,10 @@ class VentasController extends Controller
             $ventasCreadas++;
         }
 
+        session()->flash('success', $ventasCreadas === 1
+            ? 'Pago registrado correctamente.'
+            : "{$ventasCreadas} pagos registrados correctamente.");
+
         return response()->json([
             'success' => true,
             'ventas_creadas' => $ventasCreadas,
