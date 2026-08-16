@@ -61,12 +61,12 @@
             </div>
             <div class="col-md-4 mb-3">
               <label class="form-label fw-bold text-dark">Torre</label>
-              <input type="text" name="torre" class="form-control border" value="{{ $cliente->torre }}">
+              <input type="text" name="torre" class="form-control border">
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label fw-bold text-dark">Panel</label>
-              <input type="text" name="panel" class="form-control border" value="{{ $cliente->panel }}">
+              <input type="text" name="panel" class="form-control border">
             </div>
 
 
