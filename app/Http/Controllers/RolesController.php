@@ -27,15 +27,50 @@ class RolesController extends Controller
         return strtolower(trim($role->name)) === 'superadmin';
     })->values(); // Reindexa para evitar claves no secuenciales
 
-    $permissions = Permission::all(['id', 'name']);
-    return view('roles.index', compact('roles', 'permissions'));
+    $matrix = $this->permissionMatrix();
+
+    return view('roles.index', compact('roles', 'matrix'));
 }
 
 
     public function create()
     {
-        $permissions = Permission::all(['id', 'name']);
-        return view('roles.create', compact('permissions'));
+        $matrix = $this->permissionMatrix();
+        return view('roles.create', compact('matrix'));
+    }
+
+    /**
+     * Agrupa todos los permisos en filas por módulo (a partir del nombre "Accion modulo")
+     * y columnas por acción, para pintar la matriz de permisos en las vistas de roles.
+     * Se deriva dinámicamente: cualquier permiso nuevo con el formato "Accion modulo"
+     * aparece solo con crearlo, sin tocar las vistas.
+     */
+    private function permissionMatrix(): array
+    {
+        $labels = [
+            'actividades' => 'Actividades/Accesos',
+            'auditoria' => 'Auditoría',
+            'clientes rentas' => 'Clientes de rentas',
+            'telefonos' => 'Teléfonos',
+            'anydesks' => 'AnyDesk',
+            'adeudos' => 'Adeudos (dashboard)',
+        ];
+
+        $matrix = [];
+        foreach (Permission::orderBy('id')->get(['id', 'name']) as $permission) {
+            [$accion, $modulo] = array_pad(explode(' ', $permission->name, 2), 2, '');
+
+            if (!isset($matrix[$modulo])) {
+                $matrix[$modulo] = [
+                    'label' => $labels[$modulo] ?? ucfirst($modulo),
+                    'actions' => [],
+                ];
+            }
+
+            $matrix[$modulo]['actions'][$accion] = $permission->name;
+        }
+
+        return array_values($matrix);
     }
 
     public function store(Request $request)
@@ -55,9 +90,9 @@ class RolesController extends Controller
 
     public function edit($id)
     {
-        $role = Role::findOrFail($id, ['id', 'name']);
-        $permissions = Permission::all(['id', 'name']);
-        return view('roles.edit', compact('role', 'permissions'));
+        $role = Role::with('permissions')->findOrFail($id, ['id', 'name']);
+        $matrix = $this->permissionMatrix();
+        return view('roles.edit', compact('role', 'matrix'));
     }
 
     public function update(Request $request, $id)

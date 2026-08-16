@@ -33,6 +33,19 @@ class DashboardController extends Controller
 
     }
 
+    public function mesesAdeudados(Cliente $cliente)
+    {
+        abort_unless(auth()->user()->can('Ver dashboard'), 403);
+
+        $cliente->load(['ventas', 'paquete']);
+
+        return response()->json([
+            'cliente' => $cliente->nombre,
+            'precio_paquete' => $cliente->paquete->precio ?? 0,
+            'meses' => $cliente->getMesesAdeudados(),
+        ]);
+    }
+
     protected function getDashboardData(Request $request): array
 {
     $meses = [

@@ -1,3 +1,17 @@
+@push('styles')
+    <style>
+        /* Checkboxes de la matriz de permisos: color sobrio en vez del fucsia por defecto del tema */
+        .permission-matrix .form-check-input:checked[type="checkbox"] {
+            background-image: none;
+            background-color: #344767;
+            border-color: #344767;
+        }
+        .permission-matrix .form-check-input:focus {
+            box-shadow: 0 0 0 2px rgba(52, 71, 103, 0.25);
+        }
+    </style>
+@endpush
+
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage="roles" />
 
@@ -59,7 +73,7 @@
                                                 data-bs-toggle="modal" data-bs-target="#modalEditarRol{{ $role->id }}">
                                                 <span class="material-icons">edit</span>
                                             </button>
-                                            @include('roles.modal-edit', ['role' => $role, 'permissions' => $permissions])
+                                            @include('roles.modal-edit', ['role' => $role, 'matrix' => $matrix])
                                         
                                         @can('Eliminar roles')
                                             <button type="button" class="btn btn-link text-danger p-0 mx-1" title="Eliminar"

@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Exports\VentasExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Routing\Controller;
 
 class ExportarVentasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver ventas')->only('exportar');
+    }
+
     public function exportar(Request $request)
     {
         // Validamos que las fechas sean correctas

@@ -8,10 +8,18 @@ use App\Models\Venta;
 use App\Models\ProfileAssignment;
 use App\Models\Profile;
 use App\Models\Renta;
+use Illuminate\Routing\Controller;
 
 
 class TicketController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver ventas')->only(['imprimible', 'reimprimir', 'tipoA', 'tipoB', 'tipoC', 'generico']);
+        $this->middleware('permission:Ver perfiles')->only(['perfil', 'reimprimirPerfil']);
+        $this->middleware('permission:Ver rentas')->only('imprimibleRenta');
+    }
+
     public function imprimible(Venta $venta)
     {
         $venta->load('cliente');

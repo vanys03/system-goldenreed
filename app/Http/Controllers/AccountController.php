@@ -7,9 +7,18 @@ use App\Models\Platform;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Routing\Controller;
 
 class AccountController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver cuentas')->only(['index', 'show', 'byPlatform']);
+        $this->middleware('permission:Crear cuentas')->only(['create', 'store']);
+        $this->middleware('permission:Editar cuentas')->only(['edit', 'update', 'changePassword']);
+        $this->middleware('permission:Eliminar cuentas')->only('destroy');
+    }
+
     public function index()
     {
         $accounts = Account::with('platform')->get();
@@ -56,7 +65,7 @@ class AccountController extends Controller
             default => 6,
         };
 
-        // Crear perfiles autom«¡ticamente
+        // Crear perfiles automï¿½ï¿½ï¿½ticamente
         for ($i = 1; $i <= $profilesCount; $i++) {
             Profile::create([
                 'account_id' => $account->id,
@@ -136,6 +145,6 @@ class AccountController extends Controller
         $account->password_encrypted = Hash::make($request->newPassword);
         $account->save();
 
-        return redirect()->back()->with('success', 'Contrase«Ğa actualizada correctamente.');
+        return redirect()->back()->with('success', 'Contraseï¿½ï¿½ï¿½a actualizada correctamente.');
     }
 }

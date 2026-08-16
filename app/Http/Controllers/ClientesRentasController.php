@@ -4,9 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\ClienteRenta;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class ClientesRentasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver clientes rentas')->only(['index', 'show', 'buscar']);
+        $this->middleware('permission:Crear clientes rentas')->only('store');
+        $this->middleware('permission:Editar clientes rentas')->only('update');
+        $this->middleware('permission:Eliminar clientes rentas')->only('destroy');
+    }
+
     public function index()
     {
         $clientes = ClienteRenta::all();

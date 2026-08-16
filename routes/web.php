@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActividadController;
+use App\Http\Controllers\AnydeskController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\ClientesController;
 use App\Http\Controllers\ClientesRentasController;
@@ -24,21 +25,6 @@ use App\Http\Controllers\{
 use App\Http\Middleware\NoCache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Rutas públicas - Plataformas, cuentas y perfiles
-|--------------------------------------------------------------------------
-*/
-Route::resource('platforms', PlatformController::class);
-Route::resource('account-profiles', AccountProfileController::class);
-Route::get('platforms/{platform}/accounts', [AccountController::class, 'byPlatform'])->name('platforms.accounts');
-Route::get('accounts/{account}/profiles', [AccountProfileController::class, 'byAccount'])->name('accounts.profiles');
-Route::post('/profiles/{profile}/assign', [AccountProfileController::class, 'assign'])->name('profiles.assign');
-Route::post('/profiles/{profile}/unassign', [AccountProfileController::class, 'unassign'])->name('profiles.unassign');
-Route::patch('/profiles/{profile}/pin', [AccountProfileController::class, 'updatePin']);
-
-Route::get('/telefonos', [TelefonoController::class, 'index'])->name('telefonos.index');
 
 /*
 |--------------------------------------------------------------------------
@@ -66,11 +52,51 @@ Route::get('/', function () {
 */
 Route::middleware(['auth', NoCache::class])->group(function () {
 
+    // ── Plataformas, cuentas y perfiles ─────────────────────────────────
+    Route::resource('platforms', PlatformController::class);
+    Route::resource('account-profiles', AccountProfileController::class);
+    Route::get('platforms/{platform}/accounts', [AccountController::class, 'byPlatform'])->name('platforms.accounts');
+    Route::get('accounts/{account}/profiles', [AccountProfileController::class, 'byAccount'])->name('accounts.profiles');
+    Route::post('/profiles/{profile}/assign', [AccountProfileController::class, 'assign'])->name('profiles.assign');
+    Route::post('/profiles/{profile}/unassign', [AccountProfileController::class, 'unassign'])->name('profiles.unassign');
+    Route::patch('/profiles/{profile}/pin', [AccountProfileController::class, 'updatePin']);
+
+    Route::get('/telefonos', [TelefonoController::class, 'index'])->name('telefonos.index');
+
     // ── Tickets ──────────────────────────────────────────────────────────
     Route::get('/tickets/perfil/{id}', [TicketController::class, 'perfil'])->name('ticket.perfil');
     Route::get('/ticket/perfil/{id}', [TicketController::class, 'reimprimirPerfil'])->name('ticket.perfil.reimprimir');
+    Route::get('/ticket/reimprimir/{id}', [TicketController::class, 'reimprimir'])->name('ticket.reimprimir');
+    Route::get('/ventas/{venta}/ticket-a/{cliente}', [TicketController::class, 'tipoA'])->name('tickets.tipo-a');
+    Route::get('/ventas/{venta}/ticket-b/{cliente}', [TicketController::class, 'tipoB'])->name('tickets.tipo-b');
+    Route::get('/ventas/{venta}/ticket-c/{cliente}', [TicketController::class, 'tipoC'])->name('tickets.tipo-c');
+    Route::get('/ventas/{venta}/ticket-generico/{cliente}', [TicketController::class, 'generico'])->name('tickets.generico');
+    Route::get('/tickets/reimprimir/{id}', [TicketController::class, 'reimprimir'])->name('tickets.reimprimir');
+    Route::get('/ticket/imprimir/{venta}', [TicketController::class, 'imprimible'])->name('ticket.imprimible');
+    Route::get('/ventas/{id}/ticket', [TicketController::class, 'reimprimir'])->name('ventas.ticket');
 
-    // ── Plataformas y perfiles ───────────────────────────────────────────
+    Route::get('/api/ventas/{venta}', function (App\Models\Venta $venta) {
+        return response()->json([
+            'cliente' => $venta->cliente->nombre,
+            'paquete' => optional($venta->cliente->paquete)->nombre ?? 'N/A',
+            'paquete_precio' => optional($venta->cliente->paquete)->precio ?? 0,
+            'meses' => $venta->meses,
+            'subtotal' => $venta->subtotal,
+            'descuento' => $venta->descuento,
+            'recargo_domicilio' => $venta->recargo_domicilio,
+            'recargo_atraso' => $venta->recargo_atraso ?? 0,
+            'total' => $venta->total,
+            'estado' => $venta->estado,
+            'tipo_pago' => $venta->tipo_pago,
+            'fecha_venta' => optional($venta->fecha_venta)->format('d/m/Y'),
+            'hora_venta' => optional($venta->created_at)->format('h:i A'),
+            'periodo_inicio' => optional($venta->periodo_inicio)->format('d/m/Y'),
+            'periodo_fin' => optional($venta->periodo_fin)->format('d/m/Y'),
+            'registrado_por' => optional($venta->usuario)->name ?? 'N/A',
+        ]);
+    });
+
+    // ── Plataformas y perfiles (historial) ──────────────────────────────
     Route::get('/platforms/historial', [PlatformHistorialController::class, 'index'])->name('platforms_historial.index');
     Route::get('/platforms/historial/data', [PlatformHistorialController::class, 'data'])->name('historial.plataformas.data');
     Route::patch('/account-profiles/{profile}/unassign', [AccountProfileController::class, 'unassign'])->name('account-profiles.unassign');
@@ -95,6 +121,7 @@ Route::middleware(['auth', NoCache::class])->group(function () {
 
     // ── Dashboard y perfil de usuario ────────────────────────────────────
     Route::get('/alt-dashboard', DashboardController::class)->name('alt-dashboard');
+    Route::get('/dashboard/clientes/{cliente}/meses-adeudados', [DashboardController::class, 'mesesAdeudados'])->name('dashboard.meses-adeudados');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -110,7 +137,16 @@ Route::middleware(['auth', NoCache::class])->group(function () {
     Route::get('clientes/contrato-blanco', [ClientesController::class, 'contratoBlanco'])->name('clientes.contrato-blanco');
     Route::resource('clientes', ClientesController::class);
 
+    Route::get('/estado-clientes', [ClientesController::class, 'estadoClientes'])->name('estado_clientes.index');
+    Route::post('/clientes/{cliente}/toggle-estado', [ClientesController::class, 'toggleEstado']);
+    Route::post('/clientes/{cliente}/update-tipo', [ClientesController::class, 'updateTipo']);
+    Route::get('/reporte-clientes', [ClientesController::class, 'reporteClientes'])->name('reporte_clientes.index');
+    Route::post('/clientes/{cliente}/deshabilitar', [ClientesController::class, 'deshabilitar'])->name('clientes.deshabilitar');
+
     Route::resource('equipos', EquipoController::class);
+
+    // ── AnyDesk (accesos remotos por torre) ──────────────────────────────
+    Route::resource('anydesks', AnydeskController::class)->except(['create', 'edit', 'show']);
 
     Route::get('/actividades-data', [ActividadController::class, 'data'])->name('actividades.data');
     Route::resource('actividades', ActividadController::class);
@@ -145,69 +181,17 @@ Route::middleware(['auth', NoCache::class])->group(function () {
     Route::get('/ventas/exportar', [ExportarVentasController::class, 'exportar'])->name('ventas.exportar');
 
     Route::post('/ventas/pago-transferencia', [VentasController::class, 'pagarPorTransferencia'])->name('ventas.pago.transferencia');
+    Route::post('/ventas/adeudo/{cliente}', [VentasController::class, 'registrarAdeudo'])->name('ventas.registrar-adeudo');
     Route::get('/ventas/corte/cerrar', [VentasController::class, 'cerrarCorteHoy'])->name('ventas.corte.cerrar');
     Route::get('/ventas/corte/filtrar', [VentasController::class, 'filtrarCorte'])->name('ventas.corte.filtrar');
 
-    Route::post('/clientes/{cliente}/deshabilitar', [ClientesController::class, 'deshabilitar'])->name('clientes.deshabilitar');
+    Route::get('/ventas-clientes', [VentasController::class, 'ventasClientes'])->name('ventas_clientes.index');
+    Route::get('/ventas-clientes/filtrar', [VentasController::class, 'filtrarVentasClientes'])->name('ventas_clientes.filtrar');
 
     // ── Cuentas ──────────────────────────────────────────────────────────
     Route::resource('accounts', AccountController::class);
     Route::post('/accounts/{account}/change-password', [AccountController::class, 'changePassword'])->name('accounts.changePassword');
 
 });
-
-/*
-|--------------------------------------------------------------------------
-| Clientes (público)
-|--------------------------------------------------------------------------
-*/
-Route::get('/estado-clientes', [ClientesController::class, 'estadoClientes'])->name('estado_clientes.index');
-Route::post('/clientes/{cliente}/toggle-estado', [ClientesController::class, 'toggleEstado']);
-Route::post('/clientes/{cliente}/update-tipo', [ClientesController::class, 'updateTipo']);
-Route::get('/reporte-clientes', [ClientesController::class, 'reporteClientes'])->name('reporte_clientes.index');
-
-/*
-|--------------------------------------------------------------------------
-| Ventas de clientes (público)
-|--------------------------------------------------------------------------
-*/
-Route::get('/ventas-clientes', [VentasController::class, 'ventasClientes'])->name('ventas_clientes.index');
-Route::get('/ventas-clientes/filtrar', [VentasController::class, 'filtrarVentasClientes'])->name('ventas_clientes.filtrar');
-
-/*
-|--------------------------------------------------------------------------
-| Tickets (público)
-|--------------------------------------------------------------------------
-*/
-Route::get('/ticket/reimprimir/{id}', [TicketController::class, 'reimprimir'])->name('ticket.reimprimir');
-Route::get('/ventas/{venta}/ticket-a/{cliente}', [TicketController::class, 'tipoA'])->name('tickets.tipo-a');
-Route::get('/ventas/{venta}/ticket-b/{cliente}', [TicketController::class, 'tipoB'])->name('tickets.tipo-b');
-Route::get('/ventas/{venta}/ticket-c/{cliente}', [TicketController::class, 'tipoC'])->name('tickets.tipo-c');
-Route::get('/ventas/{venta}/ticket-generico/{cliente}', [TicketController::class, 'generico'])->name('tickets.generico');
-Route::get('/tickets/reimprimir/{id}', [TicketController::class, 'reimprimir'])->name('tickets.reimprimir');
-
-Route::get('/api/ventas/{venta}', function (App\Models\Venta $venta) {
-    return response()->json([
-        'cliente' => $venta->cliente->nombre,
-        'paquete' => optional($venta->cliente->paquete)->nombre ?? 'N/A',
-        'paquete_precio' => optional($venta->cliente->paquete)->precio ?? 0,
-        'meses' => $venta->meses,
-        'subtotal' => $venta->subtotal,
-        'descuento' => $venta->descuento,
-        'recargo_domicilio' => $venta->recargo_domicilio,
-        'recargo_atraso' => $venta->recargo_atraso ?? 0,
-        'total' => $venta->total,
-        'estado' => $venta->estado,
-        'tipo_pago' => $venta->tipo_pago,
-        'fecha_venta' => optional($venta->fecha_venta)->format('d/m/Y'),
-        'hora_venta' => optional($venta->created_at)->format('h:i A'),
-        'periodo_inicio' => optional($venta->periodo_inicio)->format('d/m/Y'),
-        'periodo_fin' => optional($venta->periodo_fin)->format('d/m/Y'),
-        'registrado_por' => optional($venta->usuario)->name ?? 'N/A',
-    ]);
-});
-
-Route::get('/ticket/imprimir/{venta}', [TicketController::class, 'imprimible'])->name('ticket.imprimible');
-Route::get('/ventas/{id}/ticket', [TicketController::class, 'reimprimir'])->name('ventas.ticket');
 
 require __DIR__ . '/auth.php';

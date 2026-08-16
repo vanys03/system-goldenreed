@@ -217,10 +217,11 @@
                                                 Día de Cobro</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder">
                                                 Teléfono 1</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder">
-                                                Teléfono 2</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Ultimo
                                                 mes pagado</th>
+                                            <th
+                                                class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">
+                                                Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -233,9 +234,17 @@
                                                 <td class="text-sm text-center fw-bold" style="color: orange;">
                                                     {{ $cliente->dia_cobro }}</td>
                                                 <td class="text-sm">{{ $cliente->telefono1 }}</td>
-                                                <td class="text-sm">{{ $cliente->telefono2 }}</td>
                                                 <td class="text-sm">
                                                     <span class="badge bg-danger">{{ $estado['mensaje'] }}</span>
+                                                </td>
+                                                <td class="text-sm text-center">
+                                                    <button type="button" class="btn btn-link text-dark p-0 m-0 btn-ver-adeudo"
+                                                        title="Ver meses adeudados" data-bs-toggle="modal"
+                                                        data-bs-target="#modalAdeudoCliente"
+                                                        data-cliente-id="{{ $cliente->id }}"
+                                                        data-cliente-nombre="{{ $cliente->nombre }}">
+                                                        <i class="material-icons">receipt_long</i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @empty
@@ -255,6 +264,7 @@
 
         </div>
     </main>
+    @include('dashboard.partials.modal-adeudo-cliente')
     @include('dashboard.partials.scripts')
     @include('dashboard.partials.script')
 </x-layout>

@@ -99,6 +99,61 @@ class Cliente extends Model
     }
 
 
+    public function getMesesAdeudados(): array
+    {
+        $hoy = now()->startOfDay();
+        $ultimaVenta = $this->ventas->sortByDesc('fecha_venta')->first();
+
+        if (!$ultimaVenta) {
+            $inicio = $this->fecha_contrato
+                ? Carbon::parse($this->fecha_contrato)->startOfMonth()
+                : $hoy->copy()->startOfMonth();
+
+            return $this->rangoDeMesesAdeudados($inicio, $hoy->copy()->startOfMonth());
+        }
+
+        $periodoFin = Carbon::parse($ultimaVenta->periodo_fin)->endOfMonth()->startOfDay();
+
+        // El periodo cubierto termina antes del mes actual: se deben todos los meses
+        // desde el mes siguiente al cubierto hasta el mes actual.
+        if ($periodoFin->lt($hoy->copy()->startOfMonth())) {
+            $inicio = $periodoFin->copy()->startOfMonth()->addMonthNoOverflow();
+            return $this->rangoDeMesesAdeudados($inicio, $hoy->copy()->startOfMonth());
+        }
+
+        // El periodo cubierto llega hasta el mes actual o más allá: al corriente.
+        if ($periodoFin->gte($hoy->copy()->endOfMonth())) {
+            return [];
+        }
+
+        // El periodo cubierto termina dentro del mes actual: depende de si ya pasó
+        // el día de cobro de este mes (misma regla que getEstadoPagoActual).
+        $diaCobro = min($this->dia_cobro ?: 1, $hoy->daysInMonth);
+        $fechaCobro = Carbon::create($hoy->year, $hoy->month, $diaCobro)->startOfDay();
+
+        if ($hoy->lte($fechaCobro)) {
+            return [];
+        }
+
+        return $this->rangoDeMesesAdeudados($hoy->copy()->startOfMonth(), $hoy->copy()->startOfMonth());
+    }
+
+    protected function rangoDeMesesAdeudados(Carbon $inicio, Carbon $fin): array
+    {
+        $meses = [];
+        $cursor = $inicio->copy();
+
+        while ($cursor->lte($fin)) {
+            $meses[] = [
+                'key' => $cursor->format('Y-m'),
+                'label' => ucfirst($cursor->locale('es')->isoFormat('MMMM YYYY')),
+            ];
+            $cursor->addMonthNoOverflow();
+        }
+
+        return $meses;
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -6,9 +6,18 @@ use App\Models\Profile;
 use App\Models\Account;
 use App\Models\ProfileAssignment;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class AccountProfileController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver perfiles')->only(['index', 'show', 'byAccount', 'dataPerfilesOcupados']);
+        $this->middleware('permission:Crear perfiles')->only(['create', 'store']);
+        $this->middleware('permission:Editar perfiles')->only(['edit', 'update', 'assign', 'unassign', 'updatePin']);
+        $this->middleware('permission:Eliminar perfiles')->only('destroy');
+    }
+
     public function index()
     {
         $profiles = Profile::with('account.platform')->get();
@@ -195,7 +204,7 @@ class AccountProfileController extends Controller
                 </a>
 
                 <form action="'.route('account-profiles.unassign', $row->id).'" method="POST"
-                    class="d-inline" onsubmit="return confirm(\'¿Seguro que deseas desocupar este perfil?\')">
+                    class="d-inline" onsubmit="return confirm(\'锟�0锟�7Seguro que deseas desocupar este perfil?\')">
                     '.csrf_field().method_field('PATCH').'
                     <button type="submit" class="btn btn-link text-warning p-0 mx-1" title="Desocupar perfil">
                         <span class="material-icons">logout</span>

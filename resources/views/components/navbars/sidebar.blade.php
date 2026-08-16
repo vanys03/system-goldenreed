@@ -207,6 +207,7 @@
                 </li>
             @endcan
             
+            @can('Ver telefonos')
             <li class="nav-item">
                 <a class="nav-link text-white {{ $activePage == 'telefonos' ? ' active bg-gradient-primary' : '' }}"
                     href="{{ route('telefonos.index') }}">
@@ -216,7 +217,21 @@
                     <span class="nav-link-text ms-1">Teléfonos</span>
                 </a>
             </li>
-            
+            @endcan
+
+            @can('Ver anydesks')
+            <li class="nav-item">
+                <a class="nav-link text-white {{ $activePage == 'anydesks' ? ' active bg-gradient-primary' : '' }}"
+                    href="{{ route('anydesks.index') }}">
+                    <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="material-icons opacity-10">desktop_windows</i>
+                    </div>
+                    <span class="nav-link-text ms-1">AnyDesk</span>
+                </a>
+            </li>
+            @endcan
+
+            @can('Ver plataformas')
              <li class="nav-item">
                 <a class="nav-link text-white {{ in_array($activePage, ['platforms', 'platforms_historial']) ? 'active bg-gradient-primary' : '' }}"
                     data-bs-toggle="collapse" href="#platformsSubmenu" role="button" aria-expanded="false"
@@ -250,7 +265,9 @@
                     </ul>
                 </div>
             </li>
-            
+            @endcan
+
+            @canany(['Ver rentas', 'Ver clientes rentas'])
             <li class="nav-item">
                 <a class="nav-link text-white {{ in_array($activePage, ['rentas', 'rentas_historial', 'clientes_rentas']) ? 'active bg-gradient-primary' : '' }}"
                     data-bs-toggle="collapse" href="#rentasSubmenu" role="button" aria-expanded="false"
@@ -264,6 +281,7 @@
                     id="rentasSubmenu">
                     <ul class="nav ms-4 flex-column">
 
+                        @can('Ver clientes rentas')
                         <li class="nav-item">
                             <a class="nav-link text-white {{ $activePage == 'clientes_rentas' ? 'active' : '' }}"
                                 href="{{ route('clientes-rentas.index') }}">
@@ -273,8 +291,9 @@
                                 </div>
                             </a>
                         </li>
+                        @endcan
 
-
+                        @can('Ver rentas')
                         <li class="nav-item">
                             <a class="nav-link text-white {{ $activePage == 'rentas' ? 'active' : '' }}"
                                 href="{{ route('rentas.index') }}">
@@ -293,10 +312,12 @@
                                 </div>
                             </a>
                         </li>
+                        @endcan
                     </ul>
                 </div>
             </li>
-            
+            @endcanany
+
         </ul>
     </div>
 

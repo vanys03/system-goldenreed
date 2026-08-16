@@ -1,6 +1,6 @@
 <!-- Modal Editar Rol -->
 <div class="modal fade" id="modalEditarRol{{ $role->id }}" tabindex="-1" aria-labelledby="modalEditarRolLabel{{ $role->id }}" aria-hidden="true" translate="no">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content border-0 shadow-lg">
       <form action="{{ route('roles.update', $role->id) }}" method="POST">
         @csrf
@@ -14,7 +14,7 @@
         </div>
 
         <div class="modal-body text-start">
-          <div class="mb-4">
+          <div class="mb-3" style="max-width: 420px;">
             <label class="form-label fw-bold text-dark">Nombre del Rol</label>
             <div class="input-group">
               <span class="input-group-text bg-light"><i class="material-icons text-secondary">badge</i></span>
@@ -23,15 +23,7 @@
           </div>
 
           <label class="form-label fw-bold text-dark">Asignar Permisos</label>
-
-          <x-permission-section title="Dashboard" :range="[1, 1]" :role="$role" />
-          <x-permission-section title="Roles" :range="[2, 5]" :role="$role" />
-          <x-permission-section title="Usuarios" :range="[6, 9]" :role="$role" />
-          <x-permission-section title="Clientes" :range="[10, 13]" :role="$role" />
-          <x-permission-section title="Paquetes" :range="[14, 17]" :role="$role" />
-          <x-permission-section title="Ventas" :range="[18, 21]" :role="$role" />
-          <x-permission-section title="Actividades/Accesos" :range="[22, 22]" :role="$role" />
-
+          <x-permission-matrix :matrix="$matrix" :role="$role" />
         </div>
 
         <div class="modal-footer">

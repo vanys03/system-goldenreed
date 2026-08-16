@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Equipo;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class EquipoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Crear clientes')->only(['index', 'create', 'store']);
+    }
+
     public function index()
     {
         $equipos = Equipo::all();

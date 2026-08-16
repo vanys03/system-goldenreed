@@ -5,9 +5,15 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Models\ProfileAssignment;
 use App\Models\Profile;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class ProfileAssignmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver plataformas')->only(['index', 'data']);
+    }
+
     public function index()
     {
         $assignments = ProfileAssignment::with('profile.account.platform', 'user')
@@ -56,7 +62,7 @@ class ProfileAssignmentController extends Controller
             ]);
         }
 
-        return redirect()->route('profile-assignments.index')->with('success', 'Asignaci¨®n registrada.');
+        return redirect()->route('profile-assignments.index')->with('success', 'Asignaciï¿½ï¿½n registrada.');
     }
 
     public function show(ProfileAssignment $profile_assignment)
@@ -89,13 +95,13 @@ class ProfileAssignmentController extends Controller
         $profile_assignment->update($data);
 
         return redirect()->route('profile-assignments.show', $profile_assignment)
-            ->with('success', 'Asignaci¨®n actualizada.');
+            ->with('success', 'Asignaciï¿½ï¿½n actualizada.');
     }
 
     public function destroy(ProfileAssignment $profile_assignment)
     {
         $profile_assignment->delete();
-        return back()->with('success', 'Asignaci¨®n eliminada correctamente.');
+        return back()->with('success', 'Asignaciï¿½ï¿½n eliminada correctamente.');
     }
 
     public function assign(Request $request, Profile $profile)

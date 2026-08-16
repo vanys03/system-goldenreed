@@ -7,10 +7,23 @@ use App\Models\Cliente;
 use App\Models\Venta;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;  
+use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controller;
 
 class VentasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver ventas')->only([
+            'index', 'calcularRecargo', 'buscarClientes', 'historial', 'corte',
+            'estadoCliente', 'ventasClientes', 'filtrarVentasClientes', 'filtrarCorte',
+        ]);
+        $this->middleware('permission:Crear ventas')->only(['store', 'pagarPorTransferencia']);
+        $this->middleware('permission:Crear adeudos')->only('registrarAdeudo');
+        $this->middleware('permission:Editar ventas')->only(['update', 'cerrarCorteHoy']);
+        $this->middleware('permission:Eliminar ventas')->only('destroy');
+    }
+
     public function index(Request $request)
     {
         $clientes = Cliente::with([
@@ -171,6 +184,104 @@ class VentasController extends Controller
         return redirect()
             ->route('ventas.index')
             ->with('venta_id_para_imprimir', $venta->id);
+    }
+
+    /**
+     * Registra un pago retroactivo desde el módulo de adeudos del dashboard,
+     * para meses que no se capturaron a tiempo en el sistema.
+     */
+    public function registrarAdeudo(Request $request, Cliente $cliente)
+    {
+        $request->validate([
+            'meses_seleccionados' => 'required|array|min:1',
+            'meses_seleccionados.*.mes' => 'required|date_format:Y-m',
+            'meses_seleccionados.*.tipo_pago' => 'required|in:Efectivo,Transferencia',
+        ]);
+
+        $cliente->load('paquete', 'ventas');
+
+        if (!$cliente->paquete) {
+            return response()->json(['message' => 'Este cliente no tiene paquete asignado.'], 422);
+        }
+
+        $seleccionados = collect($request->meses_seleccionados)
+            ->sortBy('mes')
+            ->values();
+
+        // Cada venta solo admite un tipo de pago, así que se agrupan los meses
+        // consecutivos que comparten el mismo tipo de pago (ej. junio en
+        // transferencia y julio en efectivo generan dos ventas separadas).
+        $grupos = [];
+        $grupoActual = [];
+
+        foreach ($seleccionados as $item) {
+            if (empty($grupoActual)) {
+                $grupoActual[] = $item;
+                continue;
+            }
+
+            $ultimo = end($grupoActual);
+            $mesEsperado = Carbon::createFromFormat('Y-m', $ultimo['mes'])
+                ->addMonthNoOverflow()
+                ->format('Y-m');
+
+            if ($item['tipo_pago'] === $ultimo['tipo_pago'] && $item['mes'] === $mesEsperado) {
+                $grupoActual[] = $item;
+            } else {
+                $grupos[] = $grupoActual;
+                $grupoActual = [$item];
+            }
+        }
+
+        if (!empty($grupoActual)) {
+            $grupos[] = $grupoActual;
+        }
+
+        $precioPaquete = $cliente->paquete->precio;
+        $ventasCreadas = 0;
+
+        foreach ($grupos as $grupo) {
+            $meses = count($grupo);
+            $periodoInicio = Carbon::createFromFormat('Y-m', $grupo[0]['mes'])->startOfMonth();
+            $periodoFin = $periodoInicio->copy()->addMonthsNoOverflow($meses);
+
+            $pagoPeriodoDuplicado = Venta::where('cliente_id', $cliente->id)
+                ->whereDate('periodo_inicio', $periodoInicio)
+                ->whereDate('periodo_fin', $periodoFin)
+                ->exists();
+
+            if ($pagoPeriodoDuplicado) {
+                return response()->json([
+                    'message' => 'Ya existe un pago registrado para el periodo que inicia en ' . $periodoInicio->format('m/Y') . '.',
+                ], 422);
+            }
+
+            $subtotal = $precioPaquete * $meses;
+
+            Venta::create([
+                'usuario_id' => Auth::id(),
+                'cliente_id' => $cliente->id,
+                'estado' => 'pagado',
+                'meses' => $meses,
+                'descuento' => 0,
+                'recargo_domicilio' => 0,
+                'recargo_atraso' => 0,
+                'fecha_venta' => now(),
+                'subtotal' => $subtotal,
+                'total' => $subtotal,
+                'periodo_inicio' => $periodoInicio,
+                'periodo_fin' => $periodoFin,
+                'tipo_pago' => $grupo[0]['tipo_pago'],
+                'notas' => 'Pago capturado desde el módulo de adeudos del dashboard (mes(es) que no se habían registrado a tiempo en el sistema).',
+            ]);
+
+            $ventasCreadas++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'ventas_creadas' => $ventasCreadas,
+        ]);
     }
 
 

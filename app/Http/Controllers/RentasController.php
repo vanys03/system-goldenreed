@@ -7,9 +7,18 @@ use App\Models\ClienteRenta;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
+use Illuminate\Routing\Controller;
 
 class RentasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver rentas')->only(['index', 'show', 'detalle', 'historial', 'data']);
+        $this->middleware('permission:Crear rentas')->only('store');
+        $this->middleware('permission:Editar rentas')->only(['update', 'confirmar', 'cancelar']);
+        $this->middleware('permission:Eliminar rentas')->only('destroy');
+    }
+
     public function index()
     {
         $rentas = Renta::with(['cliente', 'usuario'])->get();

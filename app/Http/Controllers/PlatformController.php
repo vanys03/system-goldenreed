@@ -5,9 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Platform;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Routing\Controller;
 
 class PlatformController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:Ver plataformas')->only(['index', 'show']);
+        $this->middleware('permission:Crear plataformas')->only(['create', 'store']);
+        $this->middleware('permission:Editar plataformas')->only(['edit', 'update']);
+        $this->middleware('permission:Eliminar plataformas')->only('destroy');
+    }
+
     public function index()
     {
         $platforms = Platform::withCount('accounts')->get();
