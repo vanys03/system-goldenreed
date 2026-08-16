@@ -33,5 +33,53 @@
             }
         });
     }
+
+    document.getElementById('btn-confirmar-contrato-blanco')?.addEventListener('click', function () {
+        document.getElementById('form-contrato-blanco').submit();
+        setTimeout(refrescarFoliosDisponibles, 1500);
+    });
+
+    function refrescarFoliosDisponibles() {
+        const select = document.getElementById('select-folio-cliente');
+        const aviso = document.getElementById('sin-folios-disponibles');
+        const btnGuardar = document.getElementById('btn-guardar-cliente');
+
+        if (!select) {
+            return;
+        }
+
+        fetch('{{ route('clientes.folios-disponibles') }}')
+            .then(response => response.json())
+            .then(folios => {
+                const seleccionActual = select.value;
+
+                select.innerHTML = '<option value="">-- Selecciona un folio --</option>';
+                folios.forEach(folio => {
+                    const option = document.createElement('option');
+                    option.value = folio.id;
+                    const numero = 'GD' + String(folio.numero).padStart(4, '0');
+                    const impreso = folio.impreso_at
+                        ? ' — impreso ' + new Date(folio.impreso_at).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : '';
+                    option.textContent = numero + impreso;
+                    select.appendChild(option);
+                });
+
+                const hayFolios = folios.length > 0;
+                select.disabled = !hayFolios;
+                if (aviso) {
+                    aviso.classList.toggle('d-none', hayFolios);
+                }
+                if (btnGuardar) {
+                    btnGuardar.disabled = !hayFolios;
+                }
+
+                if (folios.some(f => String(f.id) === seleccionActual)) {
+                    select.value = seleccionActual;
+                }
+            });
+    }
+
+    document.getElementById('modalCrearCliente')?.addEventListener('show.bs.modal', refrescarFoliosDisponibles);
 </script>
 @endpush

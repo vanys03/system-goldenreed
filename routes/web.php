@@ -135,7 +135,8 @@ Route::middleware(['auth', NoCache::class])->group(function () {
     Route::get('clientes/{id}/edit-modal', [ClientesController::class, 'editModal'])->name('clientes.edit-modal');
     Route::get('clientes/{id}/delete-modal', [ClientesController::class, 'deleteModal'])->name('clientes.delete-modal');
     Route::get('clientes/{cliente}/contrato', [ClientesController::class, 'contrato'])->name('clientes.contrato');
-    Route::get('clientes/contrato-blanco', [ClientesController::class, 'contratoBlanco'])->name('clientes.contrato-blanco');
+    Route::post('clientes/contrato-blanco', [ClientesController::class, 'contratoBlanco'])->name('clientes.contrato-blanco');
+    Route::get('clientes/folios-disponibles', [ClientesController::class, 'foliosDisponibles'])->name('clientes.folios-disponibles');
     Route::resource('clientes', ClientesController::class);
 
     Route::get('/estado-clientes', [ClientesController::class, 'estadoClientes'])->name('estado_clientes.index');

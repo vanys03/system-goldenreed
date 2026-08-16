@@ -13,9 +13,12 @@
                                 <span class="material-icons align-middle">add</span> Agregar Cliente
                             </button>
                         @endcan
-                        <a class="btn btn-outline-dark" href="{{ route('clientes.contrato-blanco') }}" target="_blank">
+                        <form id="form-contrato-blanco" action="{{ route('clientes.contrato-blanco') }}" method="POST" target="_blank" class="d-inline">
+                            @csrf
+                        </form>
+                        <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalContratoBlanco">
                             <span class="material-icons align-middle">description</span> Imprimir contrato en blanco
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -44,6 +47,9 @@
 
         {{-- Modal Crear Cliente --}}
         @include('clientes.partials.modal-create')
+
+        {{-- Modal Confirmar Contrato en Blanco --}}
+        @include('clientes.partials.modal-contrato-blanco')
 
         {{-- Toast --}}
         @include('components.alert-toast')

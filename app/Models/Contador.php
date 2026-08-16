@@ -24,9 +24,4 @@ class Contador extends Model
             return $contador->valor;
         });
     }
-
-    public static function previewSiguienteFolioCliente(): int
-    {
-        return (int) self::where('nombre', 'folio_cliente')->value('valor') + 1;
-    }
 }
