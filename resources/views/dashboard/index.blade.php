@@ -261,6 +261,65 @@
                 </div>
             </div>
 
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header pb-0">
+                            <h6 class="fw-bold text-center text-warning">Clientes sin Pagos Registrados</h6>
+                        </div>
+                        <div class="card-body px-0 pt-0 pb-2">
+                            <div class="table-responsive p-3">
+                                <table id="tabla-clientes-sin-pagos" class="table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Nombre
+                                            </th>
+                                            <th
+                                                class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">
+                                                Día de Cobro</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder">
+                                                Teléfono 1</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Estatus
+                                            </th>
+                                            <th
+                                                class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">
+                                                Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($clientesSinPagos as $cliente)
+                                            <tr>
+                                                <td class="text-sm">{{ $cliente->nombre }}</td>
+                                                <td class="text-sm text-center fw-bold" style="color: orange;">
+                                                    {{ $cliente->dia_cobro }}</td>
+                                                <td class="text-sm">{{ $cliente->telefono1 }}</td>
+                                                <td class="text-sm">
+                                                    <span class="badge bg-secondary">Sin pagos registrados</span>
+                                                </td>
+                                                <td class="text-sm text-center">
+                                                    <button type="button" class="btn btn-link text-dark p-0 m-0 btn-ver-adeudo"
+                                                        title="Ver meses adeudados" data-bs-toggle="modal"
+                                                        data-bs-target="#modalAdeudoCliente"
+                                                        data-cliente-id="{{ $cliente->id }}"
+                                                        data-cliente-nombre="{{ $cliente->nombre }}">
+                                                        <i class="material-icons">receipt_long</i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center text-secondary">No hay clientes sin
+                                                    pagos registrados</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
         </div>
     </main>

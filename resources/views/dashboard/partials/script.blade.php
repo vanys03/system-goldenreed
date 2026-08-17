@@ -57,6 +57,11 @@
                 tablaClientesAtrasados.DataTable(opcionesDataTable);
             }
 
+            const tablaClientesSinPagos = $('#tabla-clientes-sin-pagos');
+            if (tablaClientesSinPagos.length) {
+                tablaClientesSinPagos.DataTable(opcionesDataTable);
+            }
+
             $(document).on('click', '.btn-ver-adeudo', function () {
                 const clienteId = $(this).data('cliente-id');
                 const nombre = $(this).data('cliente-nombre');

@@ -131,6 +131,45 @@
     </div>
 </div>
 
+<!-- Tabla: Clientes sin Pagos Registrados -->
+<div class="row mt-4 justify-content-center">
+    <div class="col-lg-11">
+        <div class="card shadow-sm">
+            <div class="card-header pb-0">
+                <h6 class="fw-bold text-center text-warning">Clientes sin Pagos Registrados</h6>
+            </div>
+            <div class="card-body px-3 pt-0 pb-2">
+                <div class="table-responsive">
+                    <table id="tabla-clientes-sin-pagos" class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th class="text-center">Día de Cobro</th>
+                                <th>Teléfono 1</th>
+                                <th>Teléfono 2</th>
+                                <th>Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($clientesSinPagos as $cliente)
+                                <tr>
+                                    <td>{{ $cliente->nombre }}</td>
+                                    <td class="text-center fw-bold" style="color: orange;">{{ $cliente->dia_cobro }}</td>
+                                    <td>{{ $cliente->telefono1 }}</td>
+                                    <td>{{ $cliente->telefono2 }}</td>
+                                    <td><span class="badge bg-secondary">Sin pagos registrados</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-center text-secondary">No hay clientes sin pagos registrados</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     </main>
 
     @include('dashboard.partials.script')

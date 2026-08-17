@@ -23,13 +23,18 @@ class DashboardController extends Controller
             ->where('activo', 1)
             ->get();
 
-        $clientesAtrasados = Cliente::where('activo', 1)
-            ->get()
-            ->filter(function ($cliente) {
-                return $cliente->getEstadoPagoActual()['estado'] === 'atrasado';
-            });
+        $clientesActivos = Cliente::where('activo', 1)->with('ventas')->get();
 
-        return view('dashboard.limitado', compact('clientesDeHoy', 'clientesAtrasados'));
+        $clientesSinPagos = $clientesActivos->filter(function ($cliente) {
+            return $cliente->ventas->isEmpty();
+        });
+
+        $clientesAtrasados = $clientesActivos->filter(function ($cliente) {
+            return $cliente->ventas->isNotEmpty()
+                && $cliente->getEstadoPagoActual()['estado'] === 'atrasado';
+        });
+
+        return view('dashboard.limitado', compact('clientesDeHoy', 'clientesAtrasados', 'clientesSinPagos'));
 
     }
 
@@ -67,11 +72,16 @@ class DashboardController extends Controller
         ->where('activo', 1)
         ->get();
 
-    $clientesAtrasados = Cliente::where('activo', 1)
-        ->get()
-        ->filter(function ($cliente) {
-            return $cliente->getEstadoPagoActual()['estado'] === 'atrasado';
-        });
+    $clientesActivos = Cliente::where('activo', 1)->with('ventas')->get();
+
+    $clientesSinPagos = $clientesActivos->filter(function ($cliente) {
+        return $cliente->ventas->isEmpty();
+    });
+
+    $clientesAtrasados = $clientesActivos->filter(function ($cliente) {
+        return $cliente->ventas->isNotEmpty()
+            && $cliente->getEstadoPagoActual()['estado'] === 'atrasado';
+    });
 
     // Reemplazo del bloque problemático
     $ventasPorMes = [];
@@ -95,6 +105,7 @@ class DashboardController extends Controller
         'ventasPorMes' => $ventasPorMes,
         'clientesDeHoy' => $clientesDeHoy,
         'clientesAtrasados' => $clientesAtrasados,
+        'clientesSinPagos' => $clientesSinPagos,
     ];
 }
 
