@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 use App\Models\Cliente;
 use App\Models\Contador;
 use App\Models\Folio;
@@ -247,6 +248,7 @@ class ClientesController extends Controller
         ]);
 
         $cliente = Cliente::findOrFail($id);
+        $diaCobroAnterior = (int) $cliente->dia_cobro;
 
         $cliente->update($request->only([
             'nombre',
@@ -266,6 +268,20 @@ class ClientesController extends Controller
             'zona',
             'tipo',
         ]));
+
+        $nuevoDiaCobro = (int) $cliente->dia_cobro;
+
+        if ($nuevoDiaCobro !== $diaCobroAnterior) {
+            $ultimaVenta = $cliente->ventas()->orderByDesc('fecha_venta')->first();
+
+            if ($ultimaVenta && $ultimaVenta->periodo_fin) {
+                $periodoFin = Carbon::parse($ultimaVenta->periodo_fin);
+                $diaAjustado = min($nuevoDiaCobro, $periodoFin->daysInMonth);
+
+                $ultimaVenta->periodo_fin = $periodoFin->copy()->day($diaAjustado);
+                $ultimaVenta->save();
+            }
+        }
 
         if ($request->hasFile('documento')) {
 
