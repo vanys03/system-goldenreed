@@ -245,6 +245,8 @@ class ClientesController extends Controller
             'zona' => 'nullable|string|max:255',
             'tipo' => 'required|in:A,B,C',
             'documento' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'recibo_luz' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'credencial_elector' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
         ]);
 
         $cliente = Cliente::findOrFail($id);
@@ -283,38 +285,9 @@ class ClientesController extends Controller
             }
         }
 
-        if ($request->hasFile('documento')) {
-
-            if (
-                $cliente->documento &&
-                Storage::disk('public')->exists($cliente->documento)
-            ) {
-                Storage::disk('public')->delete($cliente->documento);
-            }
-
-            $archivo = $request->file('documento');
-
-            $nombre = pathinfo(
-                $archivo->getClientOriginalName(),
-                PATHINFO_FILENAME
-            );
-
-            $nombre = Str::slug($nombre);
-
-            $extension = $archivo->getClientOriginalExtension();
-
-            $nombreFinal = time() . '_' . $nombre . '.' . $extension;
-
-            $path = $archivo->storeAs(
-                "documentos/{$id}",
-                $nombreFinal,
-                'public'
-            );
-
-            $cliente->update([
-                'documento' => $path
-            ]);
-        }
+        $this->guardarDocumentoCliente($request, $cliente, 'documento', 'documento', 'contrato');
+        $this->guardarDocumentoCliente($request, $cliente, 'recibo_luz', 'documento_recibo_luz', 'recibo_luz');
+        $this->guardarDocumentoCliente($request, $cliente, 'credencial_elector', 'documento_credencial_elector', 'credencial_elector');
 
         if ($request->has('equipo')) {
 
@@ -357,6 +330,36 @@ class ClientesController extends Controller
             ->with('success', 'Cliente y equipo actualizados correctamente.');
     }
 
+    private function guardarDocumentoCliente(Request $request, Cliente $cliente, string $campoInput, string $columna, string $prefijo): void
+    {
+        if (!$request->hasFile($campoInput)) {
+            return;
+        }
+
+        if ($cliente->{$columna} && Storage::disk('public')->exists($cliente->{$columna})) {
+            Storage::disk('public')->delete($cliente->{$columna});
+        }
+
+        $archivo = $request->file($campoInput);
+
+        $nombre = Str::slug(pathinfo(
+            $archivo->getClientOriginalName(),
+            PATHINFO_FILENAME
+        ));
+
+        $extension = $archivo->getClientOriginalExtension();
+
+        $nombreFinal = $prefijo . '_' . time() . '_' . $nombre . '.' . $extension;
+
+        $path = $archivo->storeAs(
+            "documentos/{$cliente->id}",
+            $nombreFinal,
+            'public'
+        );
+
+        $cliente->update([$columna => $path]);
+    }
+
     public function destroy($id)
     {
         $cliente = Cliente::findOrFail($id);
@@ -369,11 +372,10 @@ class ClientesController extends Controller
             );
         }
 
-        if (
-            $cliente->documento &&
-            Storage::disk('public')->exists($cliente->documento)
-        ) {
-            Storage::disk('public')->delete($cliente->documento);
+        foreach (['documento', 'documento_recibo_luz', 'documento_credencial_elector'] as $columna) {
+            if ($cliente->{$columna} && Storage::disk('public')->exists($cliente->{$columna})) {
+                Storage::disk('public')->delete($cliente->{$columna});
+            }
         }
 
         $cliente->delete();

@@ -33,6 +33,8 @@ class Cliente extends Model
         'zona',
         'tipo',
         'documento',
+        'documento_recibo_luz',
+        'documento_credencial_elector',
     ];
 
     protected $casts = [
