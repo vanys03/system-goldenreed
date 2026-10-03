@@ -24,6 +24,32 @@ class VentasController extends Controller
         $this->middleware('permission:Eliminar ventas')->only('destroy');
     }
 
+    /** Permiso que corresponde a cada valor de tipo_pago. */
+    private const PERMISO_POR_TIPO_PAGO = [
+        'Efectivo' => 'Crear pagos efectivo',
+        'Transferencia' => 'Crear pagos transferencia',
+    ];
+
+    /**
+     * Devuelve el mensaje de error si el usuario no puede registrar alguno de
+     * los tipos de pago indicados, o null si puede con todos.
+     *
+     * No va como middleware porque el tipo de pago viaja en la petición: hay
+     * que mirar el valor enviado, no solo la ruta.
+     */
+    private function tipoPagoNoPermitido(array $tiposPago): ?string
+    {
+        foreach (array_unique($tiposPago) as $tipo) {
+            $permiso = self::PERMISO_POR_TIPO_PAGO[$tipo] ?? null;
+
+            if ($permiso && !Auth::user()->can($permiso)) {
+                return 'No tienes permiso para registrar pagos en ' . mb_strtolower($tipo) . '.';
+            }
+        }
+
+        return null;
+    }
+
     public function index(Request $request)
     {
         $clientes = Cliente::with([
@@ -90,6 +116,10 @@ class VentasController extends Controller
             'recargo_domicilio' => 'nullable|numeric|min:0',
             'tipo_pago' => 'required|in:Efectivo,Transferencia',
         ]);
+
+        if ($error = $this->tipoPagoNoPermitido([$request->tipo_pago])) {
+            return redirect()->back()->withInput()->with('error', $error);
+        }
 
         $minutosBloqueo = 5;
 
@@ -197,6 +227,13 @@ class VentasController extends Controller
             'meses_seleccionados.*.mes' => 'required|date_format:Y-m',
             'meses_seleccionados.*.tipo_pago' => 'required|in:Efectivo,Transferencia',
         ]);
+
+        // Este endpoint responde JSON al dashboard, no un redirect.
+        $tipos = array_column($request->meses_seleccionados, 'tipo_pago');
+
+        if ($error = $this->tipoPagoNoPermitido($tipos)) {
+            return response()->json(['message' => $error], 403);
+        }
 
         $cliente->load('paquete', 'ventas');
 
@@ -470,6 +507,11 @@ class VentasController extends Controller
 
     public function pagarPorTransferencia(Request $request)
     {
+        // Este metodo siempre crea ventas con tipo_pago Transferencia.
+        if ($error = $this->tipoPagoNoPermitido(['Transferencia'])) {
+            return redirect()->back()->with('error', $error);
+        }
+
         $clientesIds = $request->clientes ?? [];
         $hoy = now()->startOfDay();
 
@@ -523,6 +565,10 @@ class VentasController extends Controller
             'recargo_domicilio' => 'nullable|numeric|min:0',
             'recargo_falta_pago' => 'nullable|numeric|min:0',
         ]);
+
+        if ($error = $this->tipoPagoNoPermitido([$request->tipo_pago])) {
+            return redirect()->back()->withInput()->with('error', $error);
+        }
 
         $cliente = $venta->cliente()->with('paquete')->first();
 

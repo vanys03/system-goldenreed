@@ -54,6 +54,8 @@ class RolesController extends Controller
             'telefonos' => 'Teléfonos',
             'anydesks' => 'AnyDesk',
             'adeudos' => 'Adeudos (dashboard)',
+            'pagos efectivo' => 'Cobrar en efectivo',
+            'pagos transferencia' => 'Cobrar por transferencia',
         ];
 
         $matrix = [];

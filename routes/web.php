@@ -148,6 +148,8 @@ Route::middleware(['auth', NoCache::class])->group(function () {
     Route::resource('equipos', EquipoController::class);
 
     // ── AnyDesk (accesos remotos por torre) ──────────────────────────────
+    // Las imágenes viven en disco privado: esta ruta es la única vía de acceso.
+    Route::get('anydesks/imagenes/{imagen}', [AnydeskController::class, 'imagen'])->name('anydesks.imagen');
     Route::resource('anydesks', AnydeskController::class)->except(['create', 'edit', 'show']);
 
     Route::get('/actividades-data', [ActividadController::class, 'data'])->name('actividades.data');

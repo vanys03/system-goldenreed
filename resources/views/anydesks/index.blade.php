@@ -1,6 +1,8 @@
 <x-layout bodyClass="g-sidenav-show bg-gray-200">
     <x-navbars.sidebar activePage='anydesks' />
 
+    @include('anydesks.partials.estilos')
+
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg" translate="no">
         <!-- Navbar -->
         <x-navbars.navs.auth titlePage="AnyDesk" />
@@ -20,7 +22,7 @@
                 <table id="tabla-anydesks" class="table align-items-center mb-0 w-100 d-none">
                     <thead>
                         <tr>
-                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Nombre</th>
+                            <th class="text-uppercase text-dark text-xs font-weight-bolder">Imágenes</th>
                             <th class="text-uppercase text-dark text-xs font-weight-bolder ps-2">Torre</th>
                             <th class="text-uppercase text-dark text-xs font-weight-bolder ps-2">Código</th>
                             <th class="text-uppercase text-dark text-xs font-weight-bolder ps-2">Contraseña</th>
@@ -29,16 +31,48 @@
                     </thead>
                     <tbody>
                         @foreach ($anydesks as $anydesk)
+                            @php
+                                $imagenes = $anydesk->imagenes;
+                                $visibles = $imagenes->take(3);
+                                $restantes = $imagenes->count() - $visibles->count();
+                                $urls = $imagenes->map(function ($img) {
+                                    return route('anydesks.imagen', $img->id);
+                                })->values();
+                                $tituloGaleria = $anydesk->torre . ' — ' . $anydesk->codigo;
+                            @endphp
                             <tr>
                                 <td>
-                                    <div class="d-flex px-2 py-1">
-                                        <div class="my-auto">
-                                            <h6 class="mb-0 text-xs">{{ $anydesk->nombre }}</h6>
+                                    @if ($imagenes->isEmpty())
+                                        <span class="text-secondary d-flex align-items-center gap-1 text-xs px-2 py-1">
+                                            <span class="material-icons" style="font-size: 18px;">image_not_supported</span>
+                                            Sin imágenes
+                                        </span>
+                                    @else
+                                        <div class="d-flex align-items-center gap-1 px-2 py-1">
+                                            @foreach ($visibles as $i => $imagen)
+                                                <img src="{{ route('anydesks.imagen', $imagen->id) }}"
+                                                    alt="Imagen del acceso de {{ $anydesk->torre }}"
+                                                    class="rounded border anydesk-thumb"
+                                                    style="width: 44px; height: 44px; object-fit: cover; cursor: zoom-in;"
+                                                    loading="lazy"
+                                                    data-galeria="{{ $urls->toJson() }}"
+                                                    data-indice="{{ $i }}"
+                                                    data-titulo="{{ $tituloGaleria }}">
+                                            @endforeach
+
+                                            @if ($restantes > 0)
+                                                <span class="badge bg-gradient-dark anydesk-thumb" style="cursor: zoom-in;"
+                                                    data-galeria="{{ $urls->toJson() }}"
+                                                    data-indice="{{ $visibles->count() }}"
+                                                    data-titulo="{{ $tituloGaleria }}">
+                                                    +{{ $restantes }}
+                                                </span>
+                                            @endif
                                         </div>
-                                    </div>
+                                    @endif
                                 </td>
                                 <td>
-                                    <p class="text-xs font-weight-normal mb-0">{{ $anydesk->torre }}</p>
+                                    <p class="text-xs font-weight-bold mb-0">{{ $anydesk->torre }}</p>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-1">
@@ -88,10 +122,13 @@
         <!-- Modal para crear AnyDesk -->
         @include('anydesks.modal-create')
 
+        <!-- Visor de imágenes -->
+        @include('anydesks.modal-visor')
+
         <!-- Alertas -->
         @include('components.alert-toast')
 
-            @include('anydesks.partials.scripts')
+        @include('anydesks.partials.scripts')
 
     </main>
 </x-layout>

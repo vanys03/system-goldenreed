@@ -87,9 +87,18 @@
                         <div class="col-md-4">
                             <label class="form-label">Tipo de Pago</label>
                             <select name="tipo_pago" id="tipo_pago" class="form-select border rounded-2 px-2" required>
-                                <option value="Efectivo" selected>Efectivo</option>
-                                <option value="Transferencia">Transferencia</option>
+                                @can('Crear pagos efectivo')
+                                    <option value="Efectivo" selected>Efectivo</option>
+                                @endcan
+                                @can('Crear pagos transferencia')
+                                    <option value="Transferencia">Transferencia</option>
+                                @endcan
                             </select>
+                            @cannot('Crear pagos efectivo')
+                                @cannot('Crear pagos transferencia')
+                                    <small class="text-danger">No tienes permiso para registrar ningún tipo de pago.</small>
+                                @endcannot
+                            @endcannot
                         </div>
                     </div>
 

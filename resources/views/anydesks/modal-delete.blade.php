@@ -1,7 +1,7 @@
 <x-confirm-modal
     id="modalEliminarAnydesk{{ $anydesk->id }}"
     title="Confirmar eliminación"
-    message="¿Estás seguro de que deseas eliminar el acceso AnyDesk {{ $anydesk->nombre }} ({{ $anydesk->torre }})?"
+    message="¿Estás seguro de que deseas eliminar el acceso AnyDesk de {{ $anydesk->torre }} (código {{ $anydesk->codigo }})? También se borrarán sus {{ $anydesk->imagenes->count() }} imagen(es)."
     icon="delete_forever"
     confirmText="Eliminar"
     cancelText="Cancelar"
